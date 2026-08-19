@@ -1,0 +1,11 @@
+<mat-toolbar color="primary">
+  <span>Salary Management</span>
+  @if (authService.isAuthenticated()) {
+    <span class="spacer"></span>
+    <a mat-button routerLink="/">Employees</a>
+    <a mat-button routerLink="/analytics">Analytics</a>
+    <button mat-button (click)="logout()">Logout</button>
+  }
+</mat-toolbar>
+
+<router-outlet></router-outlet>
