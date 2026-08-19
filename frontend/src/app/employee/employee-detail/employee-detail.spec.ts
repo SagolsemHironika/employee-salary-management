@@ -16,7 +16,9 @@ const EMPLOYEE = {
   jobTitle: 'Software Engineer',
   band: 'ENG-L3',
   hireDate: '2021-01-01',
-  status: 'active'
+  status: 'active',
+  currentBaseSalary: 95000,
+  currentCurrencyCode: 'USD'
 };
 
 describe('EmployeeDetail', () => {

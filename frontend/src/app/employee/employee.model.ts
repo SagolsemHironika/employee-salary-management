@@ -10,6 +10,8 @@ export interface EmployeeSummary {
   band: string;
   hireDate: string;
   status: string;
+  currentBaseSalary: number | null;
+  currentCurrencyCode: string | null;
 }
 
 export interface PagedResponse<T> {

@@ -17,10 +17,17 @@
 
   @if (loading()) {
     <mat-spinner diameter="32"></mat-spinner>
-  } @else {
-    <table mat-table [dataSource]="employees()" class="mat-elevation-z1">
+  }
+
+  <table
+    mat-table
+    [dataSource]="employees()"
+    matSort
+    (matSortChange)="onSortChange($event)"
+    class="mat-elevation-z1"
+    [class.loading]="loading()">
       <ng-container matColumnDef="employeeCode">
-        <th mat-header-cell *matHeaderCellDef>Code</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Employee ID</th>
         <td mat-cell *matCellDef="let e">{{ e.employeeCode }}</td>
       </ng-container>
 
@@ -50,7 +57,7 @@
       </ng-container>
 
       <ng-container matColumnDef="band">
-        <th mat-header-cell *matHeaderCellDef>Band</th>
+        <th mat-header-cell *matHeaderCellDef>Level</th>
         <td mat-cell *matCellDef="let e">{{ e.band }}</td>
       </ng-container>
 
@@ -59,16 +66,26 @@
         <td mat-cell *matCellDef="let e">{{ e.status }}</td>
       </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns" (click)="openEmployee(row)" class="clickable-row"></tr>
-    </table>
+      <ng-container matColumnDef="salary">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Salary</th>
+        <td mat-cell *matCellDef="let e">
+          @if (e.currentBaseSalary !== null) {
+            {{ e.currentBaseSalary | number: '1.0-0' }} {{ e.currentCurrencyCode }}
+          } @else {
+            &mdash;
+          }
+        </td>
+      </ng-container>
 
-    <mat-paginator
-      [length]="totalElements()"
-      [pageSize]="pageSize"
-      [pageIndex]="pageIndex"
-      [pageSizeOptions]="[10, 20, 50]"
-      (page)="onPage($event)">
-    </mat-paginator>
-  }
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns" (click)="openEmployee(row)" class="clickable-row"></tr>
+  </table>
+
+  <mat-paginator
+    [length]="totalElements()"
+    [pageSize]="pageSize"
+    [pageIndex]="pageIndex"
+    [pageSizeOptions]="[10, 20, 50]"
+    (page)="onPage($event)">
+  </mat-paginator>
 </div>

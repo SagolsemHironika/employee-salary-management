@@ -12,13 +12,21 @@ export interface EmployeeListFilter {
 export class EmployeeService {
   constructor(private readonly http: HttpClient) {}
 
-  list(page: number, size: number, filter: EmployeeListFilter = {}): Observable<PagedResponse<EmployeeSummary>> {
+  list(
+    page: number,
+    size: number,
+    filter: EmployeeListFilter = {},
+    sort?: string
+  ): Observable<PagedResponse<EmployeeSummary>> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (filter.country) {
       params = params.set('country', filter.country);
     }
     if (filter.department) {
       params = params.set('department', filter.department);
+    }
+    if (sort) {
+      params = params.set('sort', sort);
     }
     return this.http.get<PagedResponse<EmployeeSummary>>('/employees', { params });
   }

@@ -17,7 +17,9 @@ function summary(id: number): EmployeeSummary {
     jobTitle: 'Software Engineer',
     band: 'ENG-L3',
     hireDate: '2021-01-01',
-    status: 'active'
+    status: 'active',
+    currentBaseSalary: 95000,
+    currentCurrencyCode: 'USD'
   };
 }
 
@@ -46,7 +48,12 @@ describe('EmployeeList', () => {
     const fixture = TestBed.createComponent(EmployeeList);
     fixture.detectChanges();
 
-    expect(employeeServiceMock.list).toHaveBeenCalledWith(0, 20, { country: undefined, department: undefined });
+    expect(employeeServiceMock.list).toHaveBeenCalledWith(
+      0,
+      20,
+      { country: undefined, department: undefined },
+      undefined
+    );
     expect(fixture.componentInstance.employees()).toHaveLength(2);
     expect(fixture.componentInstance.totalElements()).toBe(2);
   });
@@ -59,7 +66,12 @@ describe('EmployeeList', () => {
     fixture.componentInstance.filterForm.setValue({ country: 'US', department: 'Engineering' });
     fixture.componentInstance.applyFilters();
 
-    expect(employeeServiceMock.list).toHaveBeenCalledWith(0, 20, { country: 'US', department: 'Engineering' });
+    expect(employeeServiceMock.list).toHaveBeenCalledWith(
+      0,
+      20,
+      { country: 'US', department: 'Engineering' },
+      undefined
+    );
   });
 
   it('requests the next page with the paginator page size on page change', () => {
@@ -69,7 +81,45 @@ describe('EmployeeList', () => {
 
     fixture.componentInstance.onPage({ pageIndex: 1, pageSize: 10, length: 2 });
 
-    expect(employeeServiceMock.list).toHaveBeenCalledWith(1, 10, { country: undefined, department: undefined });
+    expect(employeeServiceMock.list).toHaveBeenCalledWith(
+      1,
+      10,
+      { country: undefined, department: undefined },
+      undefined
+    );
+  });
+
+  it('requests salary,desc sort and resets to page 0 when the salary header is sorted', () => {
+    const fixture = TestBed.createComponent(EmployeeList);
+    fixture.detectChanges();
+    fixture.componentInstance.pageIndex = 3;
+    employeeServiceMock.list.mockClear();
+
+    fixture.componentInstance.onSortChange({ active: 'salary', direction: 'desc' });
+
+    expect(fixture.componentInstance.pageIndex).toBe(0);
+    expect(employeeServiceMock.list).toHaveBeenCalledWith(
+      0,
+      20,
+      { country: undefined, department: undefined },
+      'salary,desc'
+    );
+  });
+
+  it('clears the sort when Material cycles back to the unsorted state', () => {
+    const fixture = TestBed.createComponent(EmployeeList);
+    fixture.detectChanges();
+    fixture.componentInstance.onSortChange({ active: 'salary', direction: 'desc' });
+    employeeServiceMock.list.mockClear();
+
+    fixture.componentInstance.onSortChange({ active: 'salary', direction: '' });
+
+    expect(employeeServiceMock.list).toHaveBeenCalledWith(
+      0,
+      20,
+      { country: undefined, department: undefined },
+      undefined
+    );
   });
 
   it('navigates to the employee detail route when a row is opened', () => {

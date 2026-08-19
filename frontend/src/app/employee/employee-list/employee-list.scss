@@ -3,6 +3,12 @@
 
   table {
     width: 100%;
+    transition: opacity 0.15s ease-in-out;
+  }
+
+  table.loading {
+    opacity: 0.5;
+    pointer-events: none;
   }
 
   .filters {
