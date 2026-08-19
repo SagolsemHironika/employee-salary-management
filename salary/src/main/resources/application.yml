@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: salary
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:salary_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 500
+        order_inserts: true
+        order_updates: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+jwt:
+  secret: ${JWT_SECRET:dev-only-insecure-secret-override-with-env-var-in-prod}
+  expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}
+
+admin:
+  email: ${ADMIN_EMAIL:admin@acme.example}
+  password: ${ADMIN_PASSWORD:ChangeMe123!}
