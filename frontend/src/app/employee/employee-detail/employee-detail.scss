@@ -1,0 +1,25 @@
+.employee-detail {
+  padding: 24px;
+  max-width: 900px;
+
+  .profile-card {
+    margin-bottom: 24px;
+  }
+
+  table {
+    width: 100%;
+    margin-bottom: 32px;
+  }
+
+  .salary-form {
+    display: flex;
+    gap: 16px;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+
+  .error {
+    color: var(--mat-sys-error, #b3261e);
+    flex-basis: 100%;
+  }
+}

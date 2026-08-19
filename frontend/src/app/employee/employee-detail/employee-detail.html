@@ -1,0 +1,90 @@
+<div class="employee-detail">
+  @if (loading()) {
+    <mat-spinner diameter="32"></mat-spinner>
+  } @else if (employee(); as e) {
+    <mat-card class="profile-card">
+      <mat-card-header>
+        <mat-card-title>{{ e.firstName }} {{ e.lastName }}</mat-card-title>
+        <mat-card-subtitle>{{ e.jobTitle }} &middot; {{ e.department }} &middot; {{ e.countryCode }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p><strong>Employee code:</strong> {{ e.employeeCode }}</p>
+        <p><strong>Email:</strong> {{ e.email }}</p>
+        <p><strong>Band:</strong> {{ e.band }}</p>
+        <p><strong>Hire date:</strong> {{ e.hireDate }}</p>
+        <p><strong>Status:</strong> {{ e.status }}</p>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <h2>Salary History</h2>
+  <table mat-table [dataSource]="history()" class="mat-elevation-z1">
+    <ng-container matColumnDef="effectiveDate">
+      <th mat-header-cell *matHeaderCellDef>Effective</th>
+      <td mat-cell *matCellDef="let r">{{ r.effectiveDate }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="endDate">
+      <th mat-header-cell *matHeaderCellDef>End</th>
+      <td mat-cell *matCellDef="let r">{{ r.endDate ?? 'current' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="baseSalary">
+      <th mat-header-cell *matHeaderCellDef>Base Salary</th>
+      <td mat-cell *matCellDef="let r">{{ r.baseSalary }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="currencyCode">
+      <th mat-header-cell *matHeaderCellDef>Currency</th>
+      <td mat-cell *matCellDef="let r">{{ r.currencyCode }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="changeReason">
+      <th mat-header-cell *matHeaderCellDef>Reason</th>
+      <td mat-cell *matCellDef="let r">{{ r.changeReason }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="createdBy">
+      <th mat-header-cell *matHeaderCellDef>Recorded By</th>
+      <td mat-cell *matCellDef="let r">{{ r.createdBy }}</td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="historyColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: historyColumns"></tr>
+  </table>
+
+  <h2>Record a Salary Change</h2>
+  <form class="salary-form" [formGroup]="form" (ngSubmit)="submit()">
+    <mat-form-field appearance="outline">
+      <mat-label>Base Salary</mat-label>
+      <input matInput type="number" formControlName="baseSalary" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Currency</mat-label>
+      <input matInput formControlName="currencyCode" maxlength="3" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Effective Date</mat-label>
+      <input matInput type="date" formControlName="effectiveDate" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Reason</mat-label>
+      <mat-select formControlName="changeReason">
+        @for (reason of changeReasons; track reason) {
+          <mat-option [value]="reason">{{ reason }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    @if (formError()) {
+      <p class="error">{{ formError() }}</p>
+    }
+
+    <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || submitting()">
+      Save
+    </button>
+  </form>
+</div>
