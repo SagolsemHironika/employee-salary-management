@@ -1,28 +1,90 @@
-.employee-list {
-  padding: 24px;
+// Column widths are set on the header only; the table inherits them. Fixing the
+// identifier and money columns stops the grid reflowing between pages when one
+// page happens to hold a longer job title than the last.
+.col-code {
+  width: 120px;
+}
 
-  table {
-    width: 100%;
-    transition: opacity 0.15s ease-in-out;
-  }
+.cell-num {
+  width: 168px;
+}
 
-  table.loading {
-    opacity: 0.5;
-    pointer-events: none;
-  }
+// ---- identity cell ---------------------------------------------------------
+.ident {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
 
-  .filters {
-    display: flex;
-    gap: 16px;
-    align-items: baseline;
-    flex-wrap: wrap;
-  }
+.ident__name {
+  color: var(--text-primary);
+  font-weight: var(--fw-medium);
+  text-decoration: none;
+  white-space: nowrap;
+  border-radius: var(--radius-xs);
+}
 
-  .clickable-row {
-    cursor: pointer;
-  }
+.ident__name:hover {
+  color: var(--text-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
-  .clickable-row:hover {
-    background: rgba(0, 0, 0, 0.04);
-  }
+// ---- role cell -------------------------------------------------------------
+// Title carries the weight, band rides along as a badge. Two facts, one column,
+// one scan line — cheaper than the extra column the band used to occupy.
+.role {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.role__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ---- money cell ------------------------------------------------------------
+// The currency code is set smaller and quieter, and given a fixed width, so the
+// amounts themselves stay flush-right and comparable across mixed currencies.
+.money {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}
+
+.money__value {
+  font-weight: var(--fw-medium);
+  color: var(--text-primary);
+}
+
+.money__ccy {
+  width: 30px;
+  text-align: left;
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+}
+
+// ---- first-load skeleton ---------------------------------------------------
+.skeleton-rows {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  height: 44px;
+  padding: 0 var(--sp-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.skeleton-row .skeleton {
+  height: 8px;
 }

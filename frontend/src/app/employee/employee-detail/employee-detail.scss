@@ -1,25 +1,262 @@
-.employee-detail {
-  padding: 24px;
-  max-width: 900px;
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--text-tertiary);
+}
 
-  .profile-card {
-    margin-bottom: 24px;
+.crumbs a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-xs);
+}
+
+.crumbs a:hover {
+  color: var(--text-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link {
+  color: var(--text-accent);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+// ---- profile header --------------------------------------------------------
+.profile__top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+}
+
+.monogram--lg {
+  width: 44px;
+  height: 44px;
+  font-size: var(--fs-md);
+}
+
+.profile__id {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+// Auto-fit columns: the facts row stays a single scannable band on desktop and
+// wraps to two or three columns on a tablet without a media query per breakpoint.
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-4) var(--sp-6);
+  margin: 0;
+  padding: var(--sp-4) var(--sp-5);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-inset);
+}
+
+.fact dt {
+  font-size: var(--fs-2xs);
+  line-height: var(--lh-2xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.fact dd {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-md);
+  color: var(--text-primary);
+}
+
+.fact__money {
+  font-weight: var(--fw-semibold);
+}
+
+.fact__ccy {
+  margin-left: var(--sp-1);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+}
+
+// ---- layout ----------------------------------------------------------------
+// History gets the flexible column; the form is fixed at a comfortable
+// single-field measure so its inputs never stretch to an awkward width.
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+.form-panel {
+  position: sticky;
+  top: calc(var(--topbar-h) + var(--sp-5));
+}
+
+@media (max-width: 1100px) {
+  .detail-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  table {
-    width: 100%;
-    margin-bottom: 32px;
+  .form-panel {
+    position: static;
   }
+}
 
-  .salary-form {
-    display: flex;
-    gap: 16px;
-    align-items: baseline;
-    flex-wrap: wrap;
-  }
+// ---- timeline --------------------------------------------------------------
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: var(--sp-5);
+}
 
-  .error {
-    color: var(--mat-sys-error, #b3261e);
-    flex-basis: 100%;
-  }
+.tl {
+  position: relative;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: var(--sp-4);
+  padding-bottom: var(--sp-5);
+}
+
+.tl:last-child {
+  padding-bottom: 0;
+}
+
+// The rail is drawn per-item and stops at the last node, so the line never
+// dangles past the final record.
+.tl__rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding-top: 5px;
+}
+
+.tl:not(:last-child) .tl__rail::after {
+  content: '';
+  position: absolute;
+  top: 18px;
+  bottom: calc(var(--sp-5) * -1);
+  width: 1px;
+  background: var(--border-default);
+}
+
+.tl__node {
+  width: 9px;
+  height: 9px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  border: 2px solid var(--border-strong);
+  z-index: 1;
+}
+
+// The live record is the one people are looking for; it gets the only ring on
+// the page and a filled node.
+.tl--current .tl__node {
+  background: var(--accent-solid);
+  border-color: var(--accent-solid);
+  box-shadow: 0 0 0 3px var(--accent-subtle-bg);
+}
+
+.tl__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.tl__period {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.tl__arrow {
+  color: var(--text-disabled);
+}
+
+.tl__now {
+  color: var(--success-text);
+  font-weight: var(--fw-semibold);
+}
+
+.tl__row--amount {
+  margin-top: var(--sp-1);
+  align-items: baseline;
+}
+
+.tl__amount {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.tl__ccy {
+  margin-left: var(--sp-1);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-tertiary);
+}
+
+.delta__abs {
+  color: var(--text-tertiary);
+  font-weight: var(--fw-regular);
+}
+
+.tl__meta {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+
+// Dot separators between the metadata items only, never a leading or trailing
+// one — and with real spacing on both sides.
+.tl__meta > span + span::before {
+  content: '·';
+  margin: 0 var(--sp-2);
+  color: var(--text-disabled);
+}
+
+.tl__actor {
+  color: var(--text-secondary);
+}
+
+// ---- form ------------------------------------------------------------------
+.salary-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.salary-form__pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  gap: var(--sp-3);
+}
+
+.salary-form__submit {
+  margin-top: var(--sp-2);
+  width: 100%;
+}
+
+.salary-form__note {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-sm);
+  color: var(--text-tertiary);
 }

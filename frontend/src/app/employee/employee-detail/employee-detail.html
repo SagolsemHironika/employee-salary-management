@@ -1,90 +1,217 @@
-<div class="employee-detail">
+<div class="page">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a routerLink="/">Employees</a>
+    <span aria-hidden="true">/</span>
+    <span>{{ employee()?.employeeCode ?? '—' }}</span>
+  </nav>
+
   @if (loading()) {
-    <mat-spinner diameter="32"></mat-spinner>
+    <div class="panel">
+      <div class="panel__body">
+        <p class="skeleton" style="height: 12px; width: 220px"></p>
+      </div>
+    </div>
   } @else if (employee(); as e) {
-    <mat-card class="profile-card">
-      <mat-card-header>
-        <mat-card-title>{{ e.firstName }} {{ e.lastName }}</mat-card-title>
-        <mat-card-subtitle>{{ e.jobTitle }} &middot; {{ e.department }} &middot; {{ e.countryCode }}</mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>
-        <p><strong>Employee ID:</strong> {{ e.employeeCode }}</p>
-        <p><strong>Email:</strong> {{ e.email }}</p>
-        <p><strong>Level:</strong> {{ e.band }}</p>
-        <p><strong>Hire date:</strong> {{ e.hireDate }}</p>
-        <p><strong>Status:</strong> {{ e.status }}</p>
-      </mat-card-content>
-    </mat-card>
+    <!-- Identity header. Facts sit in a definition list rather than paragraphs:
+         a fixed label column gives the eye one scan line for every value. -->
+    <header class="profile panel">
+      <div class="profile__top">
+        <span class="monogram monogram--lg" aria-hidden="true">{{
+          e.firstName | initials: e.lastName
+        }}</span>
+        <div class="profile__id">
+          <h1 class="page__title">{{ e.firstName }} {{ e.lastName }}</h1>
+          <p class="page__subtitle">
+            {{ e.jobTitle }} <span aria-hidden="true">&middot;</span> {{ e.department }}
+          </p>
+        </div>
+        <span class="status" [class]="'status--' + statusTone(e.status)">
+          <span class="status__dot" aria-hidden="true"></span>
+          {{ e.status | humanize }}
+        </span>
+      </div>
+
+      <dl class="facts">
+        <div class="fact">
+          <dt>Employee ID</dt>
+          <dd class="mono">{{ e.employeeCode }}</dd>
+        </div>
+        <div class="fact">
+          <dt>Email</dt>
+          <dd><a class="link" [href]="'mailto:' + e.email">{{ e.email }}</a></dd>
+        </div>
+        <div class="fact">
+          <dt>Level</dt>
+          <dd><span class="badge">{{ e.band }}</span></dd>
+        </div>
+        <div class="fact">
+          <dt>Location</dt>
+          <dd class="mono">{{ e.countryCode }}</dd>
+        </div>
+        <div class="fact">
+          <dt>Hired</dt>
+          <dd>{{ e.hireDate | plainDate }}</dd>
+        </div>
+        <div class="fact">
+          <dt>Current base</dt>
+          <dd>
+            @if (e.currentBaseSalary !== null) {
+              <span class="num fact__money">{{ e.currentBaseSalary | number: '1.0-0' }}</span>
+              <span class="fact__ccy">{{ e.currentCurrencyCode }}</span>
+            } @else {
+              <span class="muted">&mdash;</span>
+            }
+          </dd>
+        </div>
+      </dl>
+    </header>
   }
 
-  <h2>Salary History</h2>
-  <table mat-table [dataSource]="history()" class="mat-elevation-z1">
-    <ng-container matColumnDef="effectiveDate">
-      <th mat-header-cell *matHeaderCellDef>Effective</th>
-      <td mat-cell *matCellDef="let r">{{ r.effectiveDate }}</td>
-    </ng-container>
+  <div class="detail-grid">
+    <!-- ================= salary history timeline ================= -->
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Salary history</h2>
+        <span class="panel__meta">{{ timeline().length }} records</span>
+      </div>
 
-    <ng-container matColumnDef="endDate">
-      <th mat-header-cell *matHeaderCellDef>End</th>
-      <td mat-cell *matCellDef="let r">{{ r.endDate ?? 'current' }}</td>
-    </ng-container>
+      @if (timeline().length === 0) {
+        <div class="empty">
+          <p class="empty__title">No salary records yet</p>
+          <p class="empty__body">
+            Record the hire compensation to start this employee's history.
+          </p>
+        </div>
+      } @else {
+        <!--
+          A timeline, not a table. Compensation history is read as a sequence of
+          *changes* — how much, when, why — and a flat grid of rows forces the
+          reader to diff two numbers in their head on every line. The rail makes
+          the ordering structural and gives each delta somewhere to live.
+        -->
+        <ol class="timeline">
+          @for (entry of timeline(); track entry.record.id) {
+            <li class="tl" [class.tl--current]="entry.current">
+              <span class="tl__rail" aria-hidden="true">
+                <span class="tl__node"></span>
+              </span>
 
-    <ng-container matColumnDef="baseSalary">
-      <th mat-header-cell *matHeaderCellDef>Base Salary</th>
-      <td mat-cell *matCellDef="let r">{{ r.baseSalary }}</td>
-    </ng-container>
+              <div class="tl__body">
+                <div class="tl__row">
+                  <span class="tl__period">
+                    {{ entry.record.effectiveDate | plainDate }}
+                    <span class="tl__arrow" aria-hidden="true">&rarr;</span>
+                    @if (entry.record.endDate) {
+                      {{ entry.record.endDate | plainDate }}
+                    } @else {
+                      <span class="tl__now">present</span>
+                    }
+                  </span>
+                  <span class="badge" [class.badge--accent]="entry.record.changeReason === 'promotion'">
+                    {{ entry.record.changeReason | humanize }}
+                  </span>
+                </div>
 
-    <ng-container matColumnDef="currencyCode">
-      <th mat-header-cell *matHeaderCellDef>Currency</th>
-      <td mat-cell *matCellDef="let r">{{ r.currencyCode }}</td>
-    </ng-container>
+                <div class="tl__row tl__row--amount">
+                  <span class="tl__amount">
+                    <span class="num">{{ entry.record.baseSalary | number: '1.0-0' }}</span>
+                    <span class="tl__ccy">{{ entry.record.currencyCode }}</span>
+                  </span>
 
-    <ng-container matColumnDef="changeReason">
-      <th mat-header-cell *matHeaderCellDef>Reason</th>
-      <td mat-cell *matCellDef="let r">{{ r.changeReason }}</td>
-    </ng-container>
+                  <!-- Direction is encoded three ways — arrow glyph, explicit
+                       sign, and colour — so it survives greyscale and colour
+                       vision deficiency (WCAG 1.4.1). -->
+                  @if (entry.deltaPercent !== null) {
+                    <span class="delta" [class]="'delta--' + entry.direction">
+                      <span class="delta__arrow" aria-hidden="true">{{
+                        entry.direction === 'up' ? '▲' : entry.direction === 'down' ? '▼' : '—'
+                      }}</span>
+                      {{ entry.deltaPercent > 0 ? '+' : ''
+                      }}{{ entry.deltaPercent | number: '1.1-1' }}%
+                      <span class="delta__abs">
+                        ({{ entry.deltaAbsolute! > 0 ? '+' : ''
+                        }}{{ entry.deltaAbsolute | number: '1.0-0' }})
+                      </span>
+                    </span>
+                  } @else if (entry.currencyChanged) {
+                    <span class="badge badge--warning">Currency changed</span>
+                  }
+                </div>
 
-    <ng-container matColumnDef="createdBy">
-      <th mat-header-cell *matHeaderCellDef>Recorded By</th>
-      <td mat-cell *matCellDef="let r">{{ r.createdBy }}</td>
-    </ng-container>
+                <!-- Separators are CSS-generated (see .tl__meta > span + span)
+                     so they never collapse against adjacent text nodes. -->
+                <p class="tl__meta">
+                  <span>Recorded by <span class="tl__actor">{{ entry.record.createdBy }}</span></span>
+                  @if (entry.record.bonus) {
+                    <span>Bonus <span class="num">{{ entry.record.bonus | number: '1.0-0' }}</span></span>
+                  }
+                  @if (entry.record.allowances) {
+                    <span
+                      >Allowances
+                      <span class="num">{{ entry.record.allowances | number: '1.0-0' }}</span></span
+                    >
+                  }
+                </p>
+              </div>
+            </li>
+          }
+        </ol>
+      }
+    </section>
 
-    <tr mat-header-row *matHeaderRowDef="historyColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: historyColumns"></tr>
-  </table>
+    <!-- ================= record a change ================= -->
+    <!-- Sticky on wide viewports: the form stays reachable while the reader
+         scrolls a long history to decide what the new figure should be. -->
+    <section class="panel form-panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Record a salary change</h2>
+      </div>
 
-  <h2>Record a Salary Change</h2>
-  <form class="salary-form" [formGroup]="form" (ngSubmit)="submit()">
-    <mat-form-field appearance="outline">
-      <mat-label>Base Salary</mat-label>
-      <input matInput type="number" formControlName="baseSalary" />
-    </mat-form-field>
+      <form class="panel__body salary-form" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="salary-form__pair">
+          <mat-form-field appearance="outline" class="salary-form__amount">
+            <mat-label>Base salary</mat-label>
+            <input matInput type="number" formControlName="baseSalary" inputmode="decimal" />
+          </mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Currency</mat-label>
-      <input matInput formControlName="currencyCode" maxlength="3" />
-    </mat-form-field>
+          <mat-form-field appearance="outline" class="salary-form__ccy">
+            <mat-label>Currency</mat-label>
+            <input matInput formControlName="currencyCode" maxlength="3" autocapitalize="characters" />
+          </mat-form-field>
+        </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Effective Date</mat-label>
-      <input matInput type="date" formControlName="effectiveDate" />
-    </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Effective date</mat-label>
+          <input matInput type="date" formControlName="effectiveDate" />
+          <mat-hint>Must be after the current record.</mat-hint>
+        </mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Reason</mat-label>
-      <mat-select formControlName="changeReason">
-        @for (reason of changeReasons; track reason) {
-          <mat-option [value]="reason">{{ reason }}</mat-option>
+        <mat-form-field appearance="outline">
+          <mat-label>Reason</mat-label>
+          <mat-select formControlName="changeReason">
+            @for (reason of changeReasons; track reason) {
+              <mat-option [value]="reason">{{ reason | humanize }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        @if (formError()) {
+          <p class="form-error" role="alert">{{ formError() }}</p>
         }
-      </mat-select>
-    </mat-form-field>
 
-    @if (formError()) {
-      <p class="error">{{ formError() }}</p>
-    }
+        <button
+          mat-flat-button
+          type="submit"
+          class="salary-form__submit"
+          [disabled]="form.invalid || submitting()"
+        >
+          {{ submitting() ? 'Saving…' : 'Save record' }}
+        </button>
 
-    <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || submitting()">
-      Save
-    </button>
-  </form>
+        <p class="salary-form__note">
+          Salary records are append-only. Saving closes the current record and opens a new one.
+        </p>
+      </form>
+    </section>
+  </div>
 </div>

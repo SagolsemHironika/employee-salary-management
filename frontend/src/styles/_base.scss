@@ -1,0 +1,544 @@
+// ============================================================================
+// BASE + SHARED PRIMITIVES
+// ----------------------------------------------------------------------------
+// Patterns used by two or more screens live here rather than in component SCSS.
+// That is partly craft (one definition of a badge) and partly a build
+// constraint: angular.json caps anyComponentStyle at 8kB.
+// ============================================================================
+
+// ---------------------------------------------------------------- reset -----
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  line-height: var(--lh-md);
+  // Inter's contextual alternates fix the "1" and "l" ambiguity that matters
+  // when someone is reading an employee code out loud over the phone.
+  font-feature-settings: 'cv05' 1, 'cv08' 1, 'ss01' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure {
+  margin: 0;
+}
+
+// ------------------------------------------------------------ focus ---------
+// One ring, everywhere, using :focus-visible so mouse users never see it but
+// keyboard users always do. WCAG 2.4.11: 2px solid + 2px offset clears the
+// component edge on every surface we ship.
+:focus {
+  outline: none;
+}
+
+:focus-visible,
+.mat-mdc-row:focus-visible,
+.mat-mdc-button-base:focus-visible {
+  outline: 2px solid var(--accent-solid);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// -------------------------------------------------------- scrollbars --------
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: var(--radius-full);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--text-disabled);
+  background-clip: content-box;
+}
+
+// ============================================================================
+// PAGE SHELL
+// ============================================================================
+.page {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--sp-6) var(--sp-6) var(--sp-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.page__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.page__title {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+}
+
+.page__subtitle {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-secondary);
+}
+
+.page__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+// ============================================================================
+// PANEL — the one container primitive. Border, not shadow.
+// ============================================================================
+.panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.panel__title {
+  font-size: var(--fs-md);
+  line-height: var(--lh-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+
+.panel__meta {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+
+.panel__body {
+  padding: var(--sp-5);
+}
+
+// ============================================================================
+// TYPE HELPERS
+// ============================================================================
+
+// The most important rule in the entire system. Proportional digits make
+// currency columns ragged and uncomparable; tabular digits let the eye scan a
+// column of salaries as if it were right-aligned even before alignment.
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  font-variant-ligatures: none;
+}
+
+.overline {
+  font-size: var(--fs-2xs);
+  line-height: var(--lh-2xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.muted {
+  color: var(--text-secondary);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// ============================================================================
+// BADGE — flat, bordered, low-chroma. Material chips are far too loud for a
+// value that repeats on every one of 10,000 rows.
+// ============================================================================
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  height: 20px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--neutral-subtle-border);
+  background: var(--neutral-subtle-bg);
+  color: var(--neutral-text);
+  font-size: var(--fs-xs);
+  line-height: 1;
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+}
+
+.badge--success {
+  border-color: var(--success-subtle-border);
+  background: var(--success-subtle-bg);
+  color: var(--success-text);
+}
+
+.badge--warning {
+  border-color: var(--warning-subtle-border);
+  background: var(--warning-subtle-bg);
+  color: var(--warning-text);
+}
+
+.badge--danger {
+  border-color: var(--danger-subtle-border);
+  background: var(--danger-subtle-bg);
+  color: var(--danger-text);
+}
+
+.badge--accent {
+  border-color: var(--accent-subtle-border);
+  background: var(--accent-subtle-bg);
+  color: var(--accent-subtle-fg);
+}
+
+// Status: a dot plus a word. Colour is the fast channel, the word is the
+// accessible one — never encode state in hue alone (WCAG 1.4.1).
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.status__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--neutral-text);
+  flex: none;
+}
+
+.status--active .status__dot {
+  background: var(--success-solid);
+}
+.status--pending .status__dot {
+  background: var(--warning-solid);
+}
+.status--inactive .status__dot {
+  background: var(--danger-solid);
+}
+
+// ============================================================================
+// DELTA — salary movement. Arrow glyph + sign + value, so the direction reads
+// three ways: shape, symbol, and colour.
+// ============================================================================
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+  color: var(--neutral-text);
+  white-space: nowrap;
+}
+
+.delta--up {
+  color: var(--success-text);
+}
+.delta--down {
+  color: var(--danger-text);
+}
+
+.delta__arrow {
+  font-size: 0.9em;
+  line-height: 1;
+}
+
+// ============================================================================
+// MONOGRAM — initials avatar. At 10k rows a 24px shape gives the eye an anchor
+// per row that text alone does not.
+// ============================================================================
+.monogram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+// ============================================================================
+// DATA GRID — the mat-table shell.
+// ============================================================================
+.data-grid {
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.data-grid table {
+  width: 100%;
+  min-width: 940px; // below this, columns compress into illegibility — scroll instead
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--bg-surface);
+}
+
+// Sticky header: on a 10k-row list the column labels must never leave the
+// viewport, or a scrolled-to row becomes a set of anonymous strings.
+.data-grid .mat-mdc-header-row {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  background: var(--bg-subtle);
+}
+
+.data-grid .mat-mdc-header-cell {
+  padding: 0 var(--sp-3);
+  border-bottom: 1px solid var(--border-default);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.data-grid .mat-mdc-cell {
+  padding: 0 var(--sp-3);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+
+.data-grid .mat-mdc-header-cell:first-of-type,
+.data-grid .mat-mdc-cell:first-of-type {
+  padding-left: var(--sp-5);
+}
+
+.data-grid .mat-mdc-header-cell:last-of-type,
+.data-grid .mat-mdc-cell:last-of-type {
+  padding-right: var(--sp-5);
+}
+
+.data-grid .mat-mdc-row:last-of-type .mat-mdc-cell {
+  border-bottom: none;
+}
+
+// Numeric columns are right-aligned so decimal points stack.
+.cell-num {
+  text-align: right;
+}
+
+.data-grid th.cell-num .mat-sort-header-container {
+  justify-content: flex-end;
+}
+
+// Row interaction. The 2px left rail is the hit indicator — it reads at a
+// glance on a dense grid where a background tint alone is nearly invisible.
+.data-grid .row--interactive {
+  cursor: pointer;
+  transition: background var(--dur-instant) var(--ease-out);
+}
+
+.data-grid .row--interactive td:first-of-type {
+  box-shadow: inset 2px 0 0 transparent;
+  transition: box-shadow var(--dur-instant) var(--ease-out);
+}
+
+.data-grid .row--interactive:hover {
+  background: var(--bg-hover);
+}
+
+.data-grid .row--interactive:hover td:first-of-type,
+.data-grid .row--interactive:focus-visible td:first-of-type {
+  box-shadow: inset 2px 0 0 var(--accent-solid);
+}
+
+.data-grid .row--interactive:focus-visible {
+  background: var(--bg-hover);
+  outline: 2px solid var(--accent-solid);
+  outline-offset: -2px;
+}
+
+// Loading: dim and lock the grid but keep it in the DOM, so the layout does not
+// collapse and the user keeps their scroll position between pages.
+.data-grid[data-busy='true'] table {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.grid-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding-left: var(--sp-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+// ============================================================================
+// FILTER BAR
+// ============================================================================
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+.filter-bar .mat-mdc-form-field {
+  width: 200px;
+}
+
+// ============================================================================
+// EMPTY / LOADING STATES
+// ============================================================================
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-12) var(--sp-6);
+  text-align: center;
+}
+
+.empty__title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+
+.empty__body {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  max-width: 42ch;
+}
+
+.skeleton {
+  border-radius: var(--radius-xs);
+  background: linear-gradient(
+    90deg,
+    var(--bg-subtle) 0%,
+    var(--bg-active) 50%,
+    var(--bg-subtle) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pan 1.4s var(--ease-in-out) infinite;
+}
+
+@keyframes skeleton-pan {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+// ============================================================================
+// FORM FEEDBACK
+// ============================================================================
+.form-error {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--danger-subtle-border);
+  background: var(--danger-subtle-bg);
+  color: var(--danger-text);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+}
+
+// ============================================================================
+// RESPONSIVE — desktop-first admin tool. Below 1024px we relax gutters rather
+// than reflow the grid: an HR analyst on a tablet would rather scroll a table
+// sideways than lose columns.
+// ============================================================================
+@media (max-width: 1024px) {
+  .page {
+    padding: var(--sp-4) var(--sp-4) var(--sp-10);
+    gap: var(--sp-4);
+  }
+
+  .panel__body,
+  .filter-bar {
+    padding-left: var(--sp-4);
+    padding-right: var(--sp-4);
+  }
+
+  .data-grid .mat-mdc-header-cell:first-of-type,
+  .data-grid .mat-mdc-cell:first-of-type {
+    padding-left: var(--sp-4);
+  }
+
+  .filter-bar .mat-mdc-form-field {
+    width: 100%;
+    min-width: 160px;
+    flex: 1 1 160px;
+  }
+}

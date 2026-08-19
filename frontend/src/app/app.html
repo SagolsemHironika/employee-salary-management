@@ -1,11 +1,46 @@
-<mat-toolbar color="primary">
-  <span>Salary Management</span>
+<!--
+  App bar. Kept as <mat-toolbar> for its height/flex behaviour, but restyled to
+  a 52px hairline bar: a saturated primary-coloured slab reads as a consumer app
+  and, worse, costs a full band of vertical space to no informational end.
+-->
+<mat-toolbar class="topbar">
+  <a class="brand" routerLink="/" aria-label="Salary Management — home">
+    <span class="brand__mark" aria-hidden="true">SM</span>
+    <span class="brand__name">Salary Management</span>
+  </a>
+
   @if (authService.isAuthenticated()) {
-    <span class="spacer"></span>
-    <a mat-button routerLink="/">Employees</a>
-    <a mat-button routerLink="/analytics">Analytics</a>
-    <button mat-button (click)="logout()">Logout</button>
+    <nav class="nav" aria-label="Primary">
+      <a
+        class="nav__link"
+        routerLink="/"
+        routerLinkActive="nav__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        >Employees</a
+      >
+      <a class="nav__link" routerLink="/analytics" routerLinkActive="nav__link--active"
+        >Analytics</a
+      >
+    </nav>
+  }
+
+  <span class="spacer"></span>
+
+  <button
+    type="button"
+    class="icon-btn"
+    (click)="theme.cycle()"
+    [attr.aria-label]="'Theme: ' + theme.preference() + '. Activate to change.'"
+    [title]="'Theme: ' + theme.preference()"
+  >
+    <span class="material-symbols-outlined" aria-hidden="true">{{ themeIcon() }}</span>
+  </button>
+
+  @if (authService.isAuthenticated()) {
+    <button mat-button type="button" class="topbar__signout" (click)="logout()">Sign out</button>
   }
 </mat-toolbar>
 
-<router-outlet></router-outlet>
+<main id="content">
+  <router-outlet></router-outlet>
+</main>

@@ -1,91 +1,199 @@
-<div class="employee-list">
-  <h1>Employees</h1>
-
-  <form class="filters" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
-    <mat-form-field appearance="outline">
-      <mat-label>Country code</mat-label>
-      <input matInput formControlName="country" placeholder="e.g. US" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Department</mat-label>
-      <input matInput formControlName="department" placeholder="e.g. Engineering" />
-    </mat-form-field>
-
-    <button mat-flat-button color="primary" type="submit">Apply</button>
-  </form>
-
-  @if (loading()) {
-    <mat-spinner diameter="32"></mat-spinner>
-  }
-
-  <table
-    mat-table
-    [dataSource]="employees()"
-    matSort
-    (matSortChange)="onSortChange($event)"
-    class="mat-elevation-z1"
-    [class.loading]="loading()">
-      <ng-container matColumnDef="employeeCode">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Employee ID</th>
-        <td mat-cell *matCellDef="let e">{{ e.employeeCode }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="firstName">
-        <th mat-header-cell *matHeaderCellDef>First Name</th>
-        <td mat-cell *matCellDef="let e">{{ e.firstName }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="lastName">
-        <th mat-header-cell *matHeaderCellDef>Last Name</th>
-        <td mat-cell *matCellDef="let e">{{ e.lastName }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="countryCode">
-        <th mat-header-cell *matHeaderCellDef>Country</th>
-        <td mat-cell *matCellDef="let e">{{ e.countryCode }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="department">
-        <th mat-header-cell *matHeaderCellDef>Department</th>
-        <td mat-cell *matCellDef="let e">{{ e.department }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="jobTitle">
-        <th mat-header-cell *matHeaderCellDef>Job Title</th>
-        <td mat-cell *matCellDef="let e">{{ e.jobTitle }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="band">
-        <th mat-header-cell *matHeaderCellDef>Level</th>
-        <td mat-cell *matCellDef="let e">{{ e.band }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="status">
-        <th mat-header-cell *matHeaderCellDef>Status</th>
-        <td mat-cell *matCellDef="let e">{{ e.status }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="salary">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Salary</th>
-        <td mat-cell *matCellDef="let e">
-          @if (e.currentBaseSalary !== null) {
-            {{ e.currentBaseSalary | number: '1.0-0' }} {{ e.currentCurrencyCode }}
-          } @else {
-            &mdash;
+<div class="page">
+  <header class="page__head">
+    <div>
+      <h1 class="page__title">Employees</h1>
+      <p class="page__subtitle">
+        @if (loading() && !hasLoadedOnce()) {
+          Loading directory&hellip;
+        } @else {
+          <span class="num">{{ totalElements() | number }}</span>
+          {{ totalElements() === 1 ? 'record' : 'records' }}
+          @if (isFiltered()) {
+            <span class="muted">&middot; filtered</span>
           }
-        </td>
-      </ng-container>
+        }
+      </p>
+    </div>
+  </header>
 
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns" (click)="openEmployee(row)" class="clickable-row"></tr>
-  </table>
+  <section class="panel">
+    <!-- Filters sit inside the panel, above the header row: they belong to this
+         table, and a detached filter bar floating on the canvas reads as a
+         page-level control that might affect more than it does. -->
+    <form class="filter-bar" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+      <mat-form-field appearance="outline" class="field--tight">
+        <mat-label>Country</mat-label>
+        <input matInput formControlName="country" placeholder="e.g. US" maxlength="2" />
+      </mat-form-field>
 
-  <mat-paginator
-    [length]="totalElements()"
-    [pageSize]="pageSize"
-    [pageIndex]="pageIndex"
-    [pageSizeOptions]="[10, 20, 50]"
-    (page)="onPage($event)">
-  </mat-paginator>
+      <mat-form-field appearance="outline" class="field--tight">
+        <mat-label>Department</mat-label>
+        <input matInput formControlName="department" placeholder="e.g. Engineering" />
+      </mat-form-field>
+
+      <button mat-flat-button type="submit">Apply</button>
+
+      @if (isFiltered()) {
+        <button mat-button type="button" (click)="clearFilters()">Clear</button>
+      }
+    </form>
+
+    <div class="data-grid" [attr.data-busy]="loading() && hasLoadedOnce()">
+      <table
+        mat-table
+        [dataSource]="employees()"
+        matSort
+        matSortDisableClear
+        (matSortChange)="onSortChange($event)"
+      >
+        <!-- Identifier leads. In a payroll audit the code is the key people
+             quote, and mono digits make a mistyped one obvious. -->
+        <ng-container matColumnDef="employeeCode">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="col-code">Employee ID</th>
+          <td mat-cell *matCellDef="let e" class="col-code">
+            <span class="mono muted">{{ e.employeeCode }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="employee">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let e">
+            <span class="ident">
+              <span class="monogram" aria-hidden="true">{{
+                e.firstName | initials: e.lastName
+              }}</span>
+              <!-- A real link, not a fake-button row: keyboard users get one
+                   tab stop with correct semantics, mouse users still get the
+                   whole row as a target. -->
+              <a
+                class="ident__name"
+                [routerLink]="['/employees', e.id]"
+                (click)="$event.stopPropagation()"
+                >{{ e.firstName }} {{ e.lastName }}</a
+              >
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="department">
+          <th mat-header-cell *matHeaderCellDef>Department</th>
+          <td mat-cell *matCellDef="let e">{{ e.department }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="jobTitle">
+          <th mat-header-cell *matHeaderCellDef>Job title</th>
+          <td mat-cell *matCellDef="let e">
+            <span class="role">
+              <span class="role__title">{{ e.jobTitle }}</span>
+              <span class="badge">{{ e.band }}</span>
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="countryCode">
+          <th mat-header-cell *matHeaderCellDef>Location</th>
+          <td mat-cell *matCellDef="let e">
+            <span class="mono">{{ e.countryCode }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let e">
+            <span class="status" [class]="'status--' + statusTone(e.status)">
+              <span class="status__dot" aria-hidden="true"></span>
+              {{ e.status | humanize }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Money, right-aligned and tabular: the decimal points stack, so the
+             eye compares magnitudes down the column without reading digits. -->
+        <ng-container matColumnDef="salary">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="cell-num">
+            Current base
+          </th>
+          <td mat-cell *matCellDef="let e" class="cell-num">
+            @if (e.currentBaseSalary !== null) {
+              <span class="money">
+                <span class="num money__value">{{ e.currentBaseSalary | number: '1.0-0' }}</span>
+                <span class="money__ccy">{{ e.currentCurrencyCode }}</span>
+              </span>
+            } @else {
+              <span class="muted" aria-label="No current salary record">&mdash;</span>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns"
+          class="row--interactive"
+          (click)="openEmployee(row)"
+        ></tr>
+      </table>
+
+      <!-- Failure and emptiness are different situations and get different
+           copy: one offers a retry, the other offers to relax the filters. -->
+      @if (!loading() && loadError()) {
+        <div class="empty" role="alert">
+          <p class="empty__title">Couldn't load employees</p>
+          <p class="empty__body">{{ loadError() }}</p>
+          <button mat-stroked-button type="button" (click)="retry()">Try again</button>
+        </div>
+      } @else if (!loading() && employees().length === 0) {
+        <div class="empty">
+          <p class="empty__title">
+            {{ isFiltered() ? 'No employees match these filters' : 'No employees yet' }}
+          </p>
+          <p class="empty__body">
+            @if (isFiltered()) {
+              Check the country code is a two-letter ISO value and the department name is spelled
+              in full.
+            } @else {
+              Once employee records exist, they will appear here.
+            }
+          </p>
+          @if (isFiltered()) {
+            <button mat-stroked-button type="button" (click)="clearFilters()">
+              Clear filters
+            </button>
+          }
+        </div>
+      }
+
+      @if (loading() && !hasLoadedOnce()) {
+        <!-- Skeleton rows, not a spinner: they hold the table's exact geometry,
+             so nothing reflows when real data lands. -->
+        <div class="skeleton-rows" aria-hidden="true">
+          @for (row of skeletonRows; track row) {
+            <div class="skeleton-row">
+              <span class="skeleton" style="width: 84px"></span>
+              <span class="skeleton" style="width: 168px"></span>
+              <span class="skeleton" style="width: 120px"></span>
+              <span class="skeleton" style="width: 148px"></span>
+              <span class="skeleton" style="width: 96px"></span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="grid-foot">
+      <span class="page__subtitle" role="status" aria-live="polite">
+        @if (loading() && hasLoadedOnce()) {
+          Updating&hellip;
+        }
+      </span>
+      <mat-paginator
+        [length]="totalElements()"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        (page)="onPage($event)"
+      >
+      </mat-paginator>
+    </div>
+  </section>
 </div>

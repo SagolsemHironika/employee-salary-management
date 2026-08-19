@@ -1,0 +1,340 @@
+// ============================================================================
+// LEDGER DESIGN SYSTEM — TOKENS
+// ----------------------------------------------------------------------------
+// Two layers, strictly separated:
+//   1. PRIMITIVES  raw ramps. Theme-independent. Never referenced by components.
+//   2. SEMANTIC    role-named aliases. Flip per theme. The only layer UI uses.
+//
+// Rule: if a component stylesheet contains a hex code, this file has a gap.
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// 1. PRIMITIVES
+// ----------------------------------------------------------------------------
+:root {
+  // Neutral — cool slate (hue ~222). Carries ~95% of the interface.
+  --n-0: #ffffff;
+  --n-25: #fcfcfd;
+  --n-50: #f8f9fc;
+  --n-100: #f1f3f9;
+  --n-150: #e8ebf3;
+  --n-200: #dee2ed;
+  --n-300: #c8cedd;
+  --n-400: #98a1b8;
+  --n-500: #6b7488;
+  --n-600: #4e5668;
+  --n-700: #3a4152;
+  --n-800: #272d3a;
+  --n-850: #1d222c;
+  --n-900: #151922;
+  --n-950: #0e1117;
+
+  // Indigo — the single accent. Reserved for action + selection, never decoration.
+  --i-50: #eef1ff;
+  --i-100: #e0e5ff;
+  --i-200: #c7cdfe;
+  --i-300: #a5adfb;
+  --i-400: #9ea4f9;
+  --i-500: #6b68ee;
+  --i-600: #4b45e0;
+  --i-700: #3d36c2;
+  --i-800: #332d9c;
+  --i-900: #2c2a7a;
+  --i-950: #1b1947;
+
+  // Green — salary increase / active / healthy
+  --g-50: #e9f8f0;
+  --g-100: #cdeedf;
+  --g-200: #9ddcc0;
+  --g-300: #4ec994;
+  --g-400: #2fa877;
+  --g-500: #118a5c;
+  --g-600: #067647;
+  --g-700: #065f3b;
+  --g-800: #07331f;
+  --g-900: #052318;
+
+  // Amber — pending / on-leave / needs review
+  --a-50: #fef6e7;
+  --a-100: #fdeac4;
+  --a-200: #fbd287;
+  --a-300: #f5b544;
+  --a-400: #e08c07;
+  --a-500: #b45309;
+  --a-600: #92400e;
+  --a-700: #78350f;
+  --a-800: #3a2005;
+  --a-900: #271603;
+
+  // Red — salary decrease / terminated / destructive
+  --r-50: #fef3f2;
+  --r-100: #fee4e2;
+  --r-200: #fecdca;
+  --r-300: #ff8b82;
+  --r-400: #f97066;
+  --r-500: #e04a3f;
+  --r-600: #d92d20;
+  --r-700: #b42318;
+  --r-800: #3d1512;
+  --r-900: #2a0e0c;
+
+  // Categorical chart hues. Ordered by first-use; separated in both hue AND
+  // lightness so they survive greyscale printing and common colour-vision
+  // deficiency. Read at runtime by ChartTheme — keep names stable.
+  --chart-1: #4b45e0;
+  --chart-2: #0e9384;
+  --chart-3: #e08c07;
+  --chart-4: #d9578a;
+  --chart-5: #2e8bd6;
+  --chart-6: #6b7488;
+
+  // --------------------------------------------------------------------------
+  // TYPOGRAPHY — theme-independent
+  // --------------------------------------------------------------------------
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  // System mono: zero network cost, and every OS ships a good one.
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+
+  // Compressed enterprise scale. Base is 14px, not 16px — an admin tool trades
+  // a little comfort for a lot more rows above the fold.
+  --fs-2xs: 0.6875rem; // 11 — overline, table labels
+  --fs-xs: 0.75rem; //    12 — badges, metadata
+  --fs-sm: 0.8125rem; //  13 — dense table cells, captions
+  --fs-md: 0.875rem; //   14 — body, default
+  --fs-lg: 1rem; //       16 — section titles
+  --fs-xl: 1.25rem; //    20 — page titles
+  --fs-2xl: 1.5rem; //    24 — stat values
+  --fs-3xl: 1.875rem; //  30 — hero stat values
+
+  --lh-2xs: 1rem; //      16
+  --lh-xs: 1rem; //       16
+  --lh-sm: 1.125rem; //   18
+  --lh-md: 1.25rem; //    20
+  --lh-lg: 1.5rem; //     24
+  --lh-xl: 1.75rem; //    28
+  --lh-2xl: 2rem; //      32
+  --lh-3xl: 2.375rem; //  38
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+
+  --tracking-tight: -0.011em; // large text only — tightens optical gaps
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em; //   overline / uppercase labels
+
+  // --------------------------------------------------------------------------
+  // SPACE — strict 4px grid. No value outside this list ships.
+  // --------------------------------------------------------------------------
+  --sp-0: 0;
+  --sp-1: 0.25rem; //  4
+  --sp-2: 0.5rem; //   8
+  --sp-3: 0.75rem; //  12
+  --sp-4: 1rem; //     16
+  --sp-5: 1.25rem; //  20
+  --sp-6: 1.5rem; //   24
+  --sp-8: 2rem; //     32
+  --sp-10: 2.5rem; //  40
+  --sp-12: 3rem; //    48
+  --sp-16: 4rem; //    64
+
+  // --------------------------------------------------------------------------
+  // RADIUS — restrained. Material's pill buttons read as consumer software.
+  // --------------------------------------------------------------------------
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-full: 999px;
+
+  // --------------------------------------------------------------------------
+  // MOTION — fast enough to feel instant, slow enough to track.
+  // --------------------------------------------------------------------------
+  --dur-instant: 80ms;
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  // --------------------------------------------------------------------------
+  // ELEVATION (z-index) — named, so nobody writes z-index: 9999 again.
+  // --------------------------------------------------------------------------
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-header: 20;
+  --z-overlay: 100;
+  --z-toast: 200;
+
+  // Fixed layout metrics
+  --topbar-h: 52px;
+  --content-max: 1600px;
+}
+
+// ----------------------------------------------------------------------------
+// 2. SEMANTIC — LIGHT (default)
+// ----------------------------------------------------------------------------
+:root {
+  color-scheme: light;
+
+  // Surfaces. Canvas is tinted, cards are pure white — the contrast between
+  // them does the work that drop shadows do in Material.
+  --bg-canvas: var(--n-50);
+  --bg-surface: var(--n-0);
+  --bg-subtle: var(--n-100);
+  --bg-inset: var(--n-50);
+  --bg-hover: var(--n-100);
+  --bg-active: var(--n-150);
+  --bg-selected: var(--i-50);
+  --bg-overlay: var(--n-0);
+  --bg-scrim: rgb(21 25 34 / 0.4);
+
+  // Text. Four steps only; more than that and hierarchy stops reading.
+  --text-primary: var(--n-900);
+  --text-secondary: var(--n-600);
+  --text-tertiary: var(--n-500);
+  --text-disabled: var(--n-400);
+  --text-inverse: var(--n-0);
+  --text-accent: var(--i-700);
+
+  // Borders. The workhorse of this design — dividers replace shadows.
+  --border-subtle: var(--n-150); // row dividers, internal rules
+  --border-default: var(--n-200); // card + input outlines
+  --border-strong: var(--n-300); // input hover, emphasis
+  --border-accent: var(--i-600);
+
+  // Action
+  --accent-solid: var(--i-600);
+  --accent-solid-hover: var(--i-700);
+  --accent-solid-active: var(--i-800);
+  --accent-fg: var(--n-0);
+  --accent-subtle-bg: var(--i-50);
+  --accent-subtle-fg: var(--i-700);
+  --accent-subtle-border: var(--i-200);
+
+  // Semantic — success / salary increase
+  --success-solid: var(--g-600);
+  --success-fg: var(--n-0);
+  --success-text: var(--g-600);
+  --success-subtle-bg: var(--g-50);
+  --success-subtle-border: var(--g-200);
+
+  // Semantic — warning / pending
+  --warning-solid: var(--a-400);
+  --warning-fg: var(--n-0);
+  --warning-text: var(--a-500);
+  --warning-subtle-bg: var(--a-50);
+  --warning-subtle-border: var(--a-200);
+
+  // Semantic — danger / salary decrease
+  --danger-solid: var(--r-600);
+  --danger-fg: var(--n-0);
+  --danger-text: var(--r-700);
+  --danger-subtle-bg: var(--r-50);
+  --danger-subtle-border: var(--r-200);
+
+  // Semantic — neutral / inactive / no change
+  --neutral-text: var(--n-600);
+  --neutral-subtle-bg: var(--n-100);
+  --neutral-subtle-border: var(--n-200);
+
+  // Shadows. Reserved for things that genuinely float above the page —
+  // menus, dialogs, sticky headers under scroll. Never on static cards.
+  --shadow-xs: 0 1px 2px 0 rgb(16 24 40 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(16 24 40 / 0.08), 0 1px 2px -1px rgb(16 24 40 / 0.06);
+  --shadow-md: 0 4px 8px -2px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.05);
+  --shadow-lg: 0 12px 16px -4px rgb(16 24 40 / 0.1), 0 4px 6px -2px rgb(16 24 40 / 0.04);
+  --shadow-sticky: 0 4px 6px -4px rgb(16 24 40 / 0.12);
+}
+
+// ----------------------------------------------------------------------------
+// 2b. SEMANTIC — DARK
+// ----------------------------------------------------------------------------
+// Applied when the user explicitly picks dark, OR when they have expressed no
+// preference in-app and their OS asks for dark. Keeping both selectors in sync
+// via a mixin means a token can never be defined in one and missed in the other.
+// ----------------------------------------------------------------------------
+@mixin dark-tokens {
+  color-scheme: dark;
+
+  // Never pure black: #000 makes text edges vibrate and kills depth cues.
+  --bg-canvas: var(--n-950);
+  --bg-surface: var(--n-900);
+  --bg-subtle: var(--n-850);
+  --bg-inset: var(--n-950);
+  --bg-hover: #1a1f29;
+  --bg-active: var(--n-800);
+  --bg-selected: #1e2143;
+  --bg-overlay: var(--n-850);
+  --bg-scrim: rgb(0 0 0 / 0.6);
+
+  --text-primary: #eef1f7;
+  --text-secondary: #a8b1c4;
+  --text-tertiary: #838da3;
+  --text-disabled: #5c6577;
+  --text-inverse: var(--n-950);
+  --text-accent: var(--i-400);
+
+  --border-subtle: #232935;
+  --border-default: #2c333f;
+  --border-strong: #3c4453;
+  --border-accent: var(--i-500);
+
+  // Lifted one step: #4b45e0 on a near-black canvas reads muddy.
+  --accent-solid: #5b55e8;
+  --accent-solid-hover: #6b68ee;
+  --accent-solid-active: #7d7af2;
+  --accent-fg: var(--n-0);
+  --accent-subtle-bg: #1e2143;
+  --accent-subtle-fg: var(--i-400);
+  --accent-subtle-border: #343a75;
+
+  // Semantic hues brighten and desaturate for dark surfaces; the -800/-900
+  // ramp steps exist specifically as dark-mode "subtle" fills.
+  --success-solid: var(--g-500);
+  --success-fg: var(--n-0);
+  --success-text: var(--g-300);
+  --success-subtle-bg: var(--g-800);
+  --success-subtle-border: var(--g-700);
+
+  --warning-solid: var(--a-400);
+  --warning-fg: var(--n-950);
+  --warning-text: var(--a-300);
+  --warning-subtle-bg: var(--a-800);
+  --warning-subtle-border: var(--a-600);
+
+  --danger-solid: var(--r-500);
+  --danger-fg: var(--n-0);
+  --danger-text: var(--r-300);
+  --danger-subtle-bg: var(--r-800);
+  --danger-subtle-border: var(--r-700);
+
+  --neutral-text: #a8b1c4;
+  --neutral-subtle-bg: var(--n-800);
+  --neutral-subtle-border: var(--n-700);
+
+  // Dark shadows need more opacity and less spread to register at all.
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 12px 16px -4px rgb(0 0 0 / 0.6), 0 4px 6px -2px rgb(0 0 0 / 0.4);
+  --shadow-sticky: 0 4px 6px -4px rgb(0 0 0 / 0.7);
+
+  // Chart hues lift for dark backgrounds.
+  --chart-1: #8b86f5;
+  --chart-2: #3cbfae;
+  --chart-3: #f0a832;
+  --chart-4: #ec7ba3;
+  --chart-5: #5aa9e6;
+  --chart-6: #98a1b8;
+}
+
+:root[data-theme='dark'] {
+  @include dark-tokens;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    @include dark-tokens;
+  }
+}

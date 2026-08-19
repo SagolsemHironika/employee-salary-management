@@ -1,0 +1,394 @@
+// ============================================================================
+// MATERIAL BRIDGE
+// ----------------------------------------------------------------------------
+// Angular Material is kept for what it is genuinely good at — CDK a11y, sort
+// state, overlay/focus management, virtual scroll. Its *appearance* is replaced
+// wholesale, at the token layer, so components stay stock `mat-*` markup.
+//
+// Three passes:
+//   A. mat.theme()          — emit the M3 token scaffold once.
+//   B. sys remap            — repoint every M3 role at a Ledger semantic token.
+//                             Because our tokens flip per theme, Material's do
+//                             too, for free, with no second mat.theme() call.
+//   C. component overrides  — density + shape that roles alone can't express.
+//
+// Only documented `mat.*-overrides()` mixins are used. No raw --mdc-* guessing:
+// those are private and rename between minor versions.
+// ============================================================================
+
+@use '@angular/material' as mat;
+
+// ---- A. Token scaffold -----------------------------------------------------
+// The palettes here are placeholders. Every colour they generate is overwritten
+// in pass B; we run this purely to emit the token *structure* Material needs.
+html {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$violet-palette,
+        tertiary: mat.$azure-palette,
+      ),
+      typography: (
+        plain-family: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        brand-family: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      ),
+      density: -2,
+    )
+  );
+}
+
+// ---- B. System role remap --------------------------------------------------
+// `:root` (0,1,0) outranks the `html` (0,0,1) block above regardless of source
+// order, so these win deterministically.
+:root {
+  // Action
+  --mat-sys-primary: var(--accent-solid);
+  --mat-sys-on-primary: var(--accent-fg);
+  --mat-sys-primary-container: var(--accent-subtle-bg);
+  --mat-sys-on-primary-container: var(--accent-subtle-fg);
+  --mat-sys-inverse-primary: var(--accent-subtle-fg);
+  --mat-sys-surface-tint: transparent; // M3 tints elevated surfaces purple. No.
+
+  // Secondary + tertiary collapse onto neutrals: a payroll tool has exactly one
+  // accent. Extra hues here are how Material apps end up looking like toys.
+  --mat-sys-secondary: var(--text-secondary);
+  --mat-sys-on-secondary: var(--bg-surface);
+  --mat-sys-secondary-container: var(--bg-subtle);
+  --mat-sys-on-secondary-container: var(--text-primary);
+  --mat-sys-tertiary: var(--accent-solid);
+  --mat-sys-on-tertiary: var(--accent-fg);
+  --mat-sys-tertiary-container: var(--accent-subtle-bg);
+  --mat-sys-on-tertiary-container: var(--accent-subtle-fg);
+
+  // Surfaces
+  --mat-sys-background: var(--bg-canvas);
+  --mat-sys-on-background: var(--text-primary);
+  --mat-sys-surface: var(--bg-surface);
+  --mat-sys-on-surface: var(--text-primary);
+  --mat-sys-on-surface-variant: var(--text-secondary);
+  --mat-sys-surface-variant: var(--bg-subtle);
+  --mat-sys-surface-dim: var(--bg-canvas);
+  --mat-sys-surface-bright: var(--bg-surface);
+  --mat-sys-surface-container-lowest: var(--bg-surface);
+  --mat-sys-surface-container-low: var(--bg-surface);
+  --mat-sys-surface-container: var(--bg-overlay);
+  --mat-sys-surface-container-high: var(--bg-overlay);
+  --mat-sys-surface-container-highest: var(--bg-subtle);
+  --mat-sys-inverse-surface: var(--text-primary);
+  --mat-sys-inverse-on-surface: var(--bg-surface);
+
+  // Lines
+  --mat-sys-outline: var(--border-default);
+  --mat-sys-outline-variant: var(--border-subtle);
+
+  // Status
+  --mat-sys-error: var(--danger-text);
+  --mat-sys-on-error: var(--danger-fg);
+  --mat-sys-error-container: var(--danger-subtle-bg);
+  --mat-sys-on-error-container: var(--danger-text);
+
+  --mat-sys-shadow: #000;
+  --mat-sys-scrim: var(--bg-scrim);
+
+  // Shape — M3 ships 12px+ corners and full-pill buttons. Both read as consumer
+  // software; enterprise data tools sit at 4–8px.
+  --mat-sys-corner-none: 0;
+  --mat-sys-corner-extra-small: var(--radius-xs);
+  --mat-sys-corner-small: var(--radius-sm);
+  --mat-sys-corner-medium: var(--radius-md);
+  --mat-sys-corner-large: var(--radius-lg);
+  --mat-sys-corner-extra-large: var(--radius-xl);
+
+  // Typography — composites plus their parts, since components read both.
+  --mat-sys-body-small: var(--fw-regular) var(--fs-sm) / var(--lh-sm) var(--font-sans);
+  --mat-sys-body-small-font: var(--font-sans);
+  --mat-sys-body-small-size: var(--fs-sm);
+  --mat-sys-body-small-weight: var(--fw-regular);
+  --mat-sys-body-small-line-height: var(--lh-sm);
+  --mat-sys-body-small-tracking: var(--tracking-normal);
+
+  --mat-sys-body-medium: var(--fw-regular) var(--fs-md) / var(--lh-md) var(--font-sans);
+  --mat-sys-body-medium-font: var(--font-sans);
+  --mat-sys-body-medium-size: var(--fs-md);
+  --mat-sys-body-medium-weight: var(--fw-regular);
+  --mat-sys-body-medium-line-height: var(--lh-md);
+  --mat-sys-body-medium-tracking: var(--tracking-normal);
+
+  --mat-sys-body-large: var(--fw-regular) var(--fs-lg) / var(--lh-lg) var(--font-sans);
+  --mat-sys-body-large-font: var(--font-sans);
+  --mat-sys-body-large-size: var(--fs-lg);
+  --mat-sys-body-large-weight: var(--fw-regular);
+  --mat-sys-body-large-line-height: var(--lh-lg);
+  --mat-sys-body-large-tracking: var(--tracking-normal);
+
+  --mat-sys-label-small: var(--fw-medium) var(--fs-2xs) / var(--lh-2xs) var(--font-sans);
+  --mat-sys-label-small-font: var(--font-sans);
+  --mat-sys-label-small-size: var(--fs-2xs);
+  --mat-sys-label-small-weight: var(--fw-medium);
+  --mat-sys-label-small-line-height: var(--lh-2xs);
+  --mat-sys-label-small-tracking: var(--tracking-normal);
+
+  --mat-sys-label-medium: var(--fw-medium) var(--fs-xs) / var(--lh-xs) var(--font-sans);
+  --mat-sys-label-medium-font: var(--font-sans);
+  --mat-sys-label-medium-size: var(--fs-xs);
+  --mat-sys-label-medium-weight: var(--fw-medium);
+  --mat-sys-label-medium-line-height: var(--lh-xs);
+  --mat-sys-label-medium-tracking: var(--tracking-normal);
+
+  --mat-sys-label-large: var(--fw-medium) var(--fs-md) / var(--lh-md) var(--font-sans);
+  --mat-sys-label-large-font: var(--font-sans);
+  --mat-sys-label-large-size: var(--fs-md);
+  --mat-sys-label-large-weight: var(--fw-medium);
+  --mat-sys-label-large-line-height: var(--lh-md);
+  --mat-sys-label-large-tracking: var(--tracking-normal);
+
+  --mat-sys-title-small: var(--fw-semibold) var(--fs-sm) / var(--lh-sm) var(--font-sans);
+  --mat-sys-title-small-font: var(--font-sans);
+  --mat-sys-title-small-size: var(--fs-sm);
+  --mat-sys-title-small-weight: var(--fw-semibold);
+  --mat-sys-title-small-line-height: var(--lh-sm);
+  --mat-sys-title-small-tracking: var(--tracking-normal);
+
+  --mat-sys-title-medium: var(--fw-semibold) var(--fs-lg) / var(--lh-lg) var(--font-sans);
+  --mat-sys-title-medium-font: var(--font-sans);
+  --mat-sys-title-medium-size: var(--fs-lg);
+  --mat-sys-title-medium-weight: var(--fw-semibold);
+  --mat-sys-title-medium-line-height: var(--lh-lg);
+  --mat-sys-title-medium-tracking: var(--tracking-normal);
+
+  --mat-sys-title-large: var(--fw-semibold) var(--fs-xl) / var(--lh-xl) var(--font-sans);
+  --mat-sys-title-large-font: var(--font-sans);
+  --mat-sys-title-large-size: var(--fs-xl);
+  --mat-sys-title-large-weight: var(--fw-semibold);
+  --mat-sys-title-large-line-height: var(--lh-xl);
+  --mat-sys-title-large-tracking: var(--tracking-tight);
+}
+
+// ---- C. Component-level overrides ------------------------------------------
+:root {
+  // TABLE — the centrepiece. Header shrinks to an 11px uppercase label so the
+  // data, not the chrome, owns the visual weight. 44px rows fit ~18 records on
+  // a 1280×800 viewport without feeling cramped.
+  @include mat.table-overrides(
+    (
+      background-color: transparent, // the .data-grid shell paints the surface
+      header-container-height: 38px,
+      row-item-container-height: 44px,
+      footer-container-height: 44px,
+      header-headline-font: var(--font-sans),
+      header-headline-size: var(--fs-2xs),
+      header-headline-weight: var(--fw-semibold),
+      header-headline-line-height: var(--lh-2xs),
+      header-headline-tracking: var(--tracking-wide),
+      header-headline-color: var(--text-secondary),
+      row-item-label-text-font: var(--font-sans),
+      row-item-label-text-size: var(--fs-sm),
+      row-item-label-text-line-height: var(--lh-md),
+      row-item-label-text-color: var(--text-primary),
+      row-item-outline-color: var(--border-subtle),
+      row-item-outline-width: 1px,
+    )
+  );
+
+  // FORM FIELD — outlined only. 38px tall with a 1px resting outline; the label
+  // never floats into a notch because we render labels above the field instead.
+  @include mat.form-field-overrides(
+    (
+      container-height: 38px,
+      container-vertical-padding: var(--sp-2),
+      container-text-font: var(--font-sans),
+      container-text-size: var(--fs-md),
+      container-text-line-height: var(--lh-md),
+      container-text-weight: var(--fw-regular),
+      outlined-container-shape: var(--radius-sm),
+      outlined-outline-width: 1px,
+      outlined-focus-outline-width: 2px,
+      outlined-outline-color: var(--border-default),
+      outlined-hover-outline-color: var(--border-strong),
+      outlined-focus-outline-color: var(--accent-solid),
+      outlined-disabled-outline-color: var(--border-subtle),
+      outlined-label-text-color: var(--text-tertiary),
+      outlined-hover-label-text-color: var(--text-secondary),
+      outlined-focus-label-text-color: var(--accent-solid),
+      outlined-label-text-font: var(--font-sans),
+      outlined-label-text-size: var(--fs-md),
+      outlined-label-text-weight: var(--fw-regular),
+      outlined-input-text-color: var(--text-primary),
+      outlined-input-text-placeholder-color: var(--text-disabled),
+      outlined-caret-color: var(--accent-solid),
+      outlined-error-outline-color: var(--danger-solid),
+      outlined-error-focus-outline-color: var(--danger-solid),
+      outlined-error-hover-outline-color: var(--danger-solid),
+      outlined-error-label-text-color: var(--danger-text),
+      error-text-color: var(--danger-text),
+      subscript-text-font: var(--font-sans),
+      subscript-text-size: var(--fs-xs),
+      subscript-text-line-height: var(--lh-xs),
+      // Material's hover/focus wash muddies an outlined field on tinted canvas.
+      hover-state-layer-opacity: 0,
+      focus-state-layer-opacity: 0,
+    )
+  );
+
+  // BUTTON — square-ish corners, no uppercase, no ripple-heavy state washes.
+  // 34px keeps a button the same optical height as a table row action.
+  @include mat.button-overrides(
+    (
+      filled-container-height: 34px,
+      filled-container-shape: var(--radius-sm),
+      filled-container-color: var(--accent-solid),
+      filled-label-text-color: var(--accent-fg),
+      filled-label-text-font: var(--font-sans),
+      filled-label-text-size: var(--fs-md),
+      filled-label-text-weight: var(--fw-medium),
+      filled-label-text-tracking: var(--tracking-normal),
+      filled-label-text-transform: none,
+      filled-horizontal-padding: var(--sp-4),
+      filled-disabled-container-color: var(--bg-active),
+      filled-disabled-label-text-color: var(--text-disabled),
+      filled-state-layer-color: var(--n-0),
+      filled-hover-state-layer-opacity: 0.12,
+      filled-pressed-state-layer-opacity: 0.2,
+
+      outlined-container-height: 34px,
+      outlined-container-shape: var(--radius-sm),
+      outlined-outline-color: var(--border-default),
+      outlined-outline-width: 1px,
+      outlined-label-text-color: var(--text-primary),
+      outlined-label-text-font: var(--font-sans),
+      outlined-label-text-size: var(--fs-md),
+      outlined-label-text-weight: var(--fw-medium),
+      outlined-label-text-transform: none,
+      outlined-horizontal-padding: var(--sp-4),
+      outlined-state-layer-color: var(--text-primary),
+      outlined-hover-state-layer-opacity: 0.05,
+
+      text-container-height: 34px,
+      text-container-shape: var(--radius-sm),
+      text-label-text-color: var(--text-secondary),
+      text-label-text-font: var(--font-sans),
+      text-label-text-size: var(--fs-md),
+      text-label-text-weight: var(--fw-medium),
+      text-label-text-transform: none,
+      text-horizontal-padding: var(--sp-3),
+      text-state-layer-color: var(--text-primary),
+      text-hover-state-layer-opacity: 0.05,
+    )
+  );
+
+  // PAGINATOR — reads as a quiet footer rule, not a second toolbar.
+  @include mat.paginator-overrides(
+    (
+      container-size: 44px,
+      container-background-color: transparent,
+      container-text-color: var(--text-secondary),
+      container-text-font: var(--font-sans),
+      container-text-size: var(--fs-sm),
+      container-text-line-height: var(--lh-sm),
+      enabled-icon-color: var(--text-secondary),
+      disabled-icon-color: var(--text-disabled),
+      form-field-container-height: 32px,
+      form-field-container-vertical-padding: var(--sp-1),
+      select-trigger-text-size: var(--fs-sm),
+    )
+  );
+
+  // CARD — outlined variant only, zero elevation. Depth comes from the 1px
+  // border against a tinted canvas; shadows are reserved for real overlays.
+  @include mat.card-overrides(
+    (
+      elevated-container-color: var(--bg-surface),
+      elevated-container-elevation: none,
+      elevated-container-shape: var(--radius-lg),
+      outlined-container-color: var(--bg-surface),
+      outlined-container-elevation: none,
+      outlined-container-shape: var(--radius-lg),
+      outlined-outline-color: var(--border-default),
+      outlined-outline-width: 1px,
+      title-text-font: var(--font-sans),
+      title-text-size: var(--fs-lg),
+      title-text-line-height: var(--lh-lg),
+      title-text-weight: var(--fw-semibold),
+      subtitle-text-font: var(--font-sans),
+      subtitle-text-size: var(--fs-sm),
+      subtitle-text-line-height: var(--lh-sm),
+      subtitle-text-color: var(--text-secondary),
+    )
+  );
+
+  // TOOLBAR — a 52px app bar with a hairline base. Not a coloured slab.
+  @include mat.toolbar-overrides(
+    (
+      standard-height: var(--topbar-h),
+      mobile-height: var(--topbar-h),
+      container-background-color: var(--bg-surface),
+      container-text-color: var(--text-primary),
+      title-text-font: var(--font-sans),
+      title-text-size: var(--fs-md),
+      title-text-line-height: var(--lh-md),
+      title-text-weight: var(--fw-semibold),
+    )
+  );
+
+  @include mat.select-overrides(
+    (
+      panel-background-color: var(--bg-overlay),
+      enabled-trigger-text-color: var(--text-primary),
+      placeholder-text-color: var(--text-disabled),
+      enabled-arrow-color: var(--text-tertiary),
+      focused-arrow-color: var(--accent-solid),
+      trigger-text-font: var(--font-sans),
+      trigger-text-size: var(--fs-md),
+      trigger-text-line-height: var(--lh-md),
+      container-elevation-shadow: var(--shadow-lg),
+    )
+  );
+
+  @include mat.progress-spinner-overrides((active-indicator-color: var(--accent-solid)));
+}
+
+// ---- Structural corrections ------------------------------------------------
+// A short, deliberate list. Anything that can be a token, is one above; these
+// are layout facts Material has no token for.
+
+// Material reserves ~20px under every field for hint/error text. In dense filter
+// bars that is dead space, so we opt out per-field with .field--tight.
+.field--tight .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+// The subscript wrapper is a fixed 20px tall with overflow:visible, so any hint
+// or server error that wraps to a second line silently overlaps the field
+// below. Letting it grow turns that collision into a layout push — which
+// matters most for backend validation messages, whose length we do not control.
+.mat-mdc-form-field-subscript-wrapper {
+  height: auto;
+  min-height: 20px;
+}
+
+// Sort affordance: arrows are always-on at low opacity rather than hover-only,
+// so keyboard and touch users can see which columns are sortable.
+.mat-sort-header-arrow {
+  color: var(--text-tertiary);
+  opacity: 0.45 !important;
+  transform: none !important;
+}
+
+.mat-sort-header-sorted .mat-sort-header-arrow {
+  color: var(--accent-solid);
+  opacity: 1 !important;
+}
+
+// Material puts the ripple/state layer above cell content in some builds.
+.mat-mdc-row,
+.mat-mdc-header-row {
+  border-bottom-color: var(--border-subtle);
+}
+
+// Overlay panels (select, menu) — border + shadow, matching our card language.
+.mat-mdc-select-panel,
+.mat-mdc-menu-panel {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md) !important;
+  background: var(--bg-overlay) !important;
+}

@@ -1,56 +1,144 @@
-<div class="analytics-dashboard">
-  <h1>Analytics</h1>
-
-  @if (loading()) {
-    <mat-spinner diameter="32"></mat-spinner>
-  } @else if (summary(); as s) {
-    <div class="stat-tiles">
-      <mat-card class="stat-tile">
-        <div class="stat-value">{{ s.headcount }}</div>
-        <div class="stat-label">Active Headcount</div>
-      </mat-card>
-      <mat-card class="stat-tile">
-        <div class="stat-value">{{ s.totalPayrollUsd | number: '1.0-0' }}</div>
-        <div class="stat-label">Total Payroll (USD)</div>
-      </mat-card>
+<div class="page">
+  <header class="page__head">
+    <div>
+      <h1 class="page__title">Compensation analytics</h1>
+      <p class="page__subtitle">Active employees, normalised to USD at the latest FX snapshot.</p>
     </div>
-  }
+  </header>
 
-  <div class="charts">
-    <mat-card class="chart-card">
-      <h3>Headcount by Department</h3>
-      <ngx-charts-bar-vertical
-        [results]="headcountByDepartment()"
-        [xAxis]="true"
-        [yAxis]="true"
-        [showXAxisLabel]="false"
-        [showYAxisLabel]="false"
-        [gradient]="false"
-      ></ngx-charts-bar-vertical>
-    </mat-card>
+  <!--
+    Stat tiles. One number each, label above and context below — the label-first
+    order means the eye lands on the figure already knowing what it is reading.
+    Bordered tiles on a tinted canvas, no shadow: at four across, drop shadows
+    turn a summary row into visual noise.
+  -->
+  <section class="stats" aria-label="Summary">
+    @for (tile of [1, 2, 3, 4]; track tile) {
+      @if (loading()) {
+        <div class="stat">
+          <span class="skeleton" style="height: 9px; width: 84px"></span>
+          <span class="skeleton" style="height: 22px; width: 128px; margin-top: 12px"></span>
+        </div>
+      }
+    }
 
-    <mat-card class="chart-card">
-      <h3>Payroll (USD) by Country</h3>
-      <ngx-charts-bar-vertical
-        [results]="payrollByCountry()"
-        [xAxis]="true"
-        [yAxis]="true"
-        [showXAxisLabel]="false"
-        [showYAxisLabel]="false"
-        [gradient]="false"
-      ></ngx-charts-bar-vertical>
-    </mat-card>
+    @if (!loading() && summary(); as s) {
+      <article class="stat">
+        <h2 class="overline">Active headcount</h2>
+        <p class="stat__value num">{{ s.headcount | number }}</p>
+        <p class="stat__foot">Employees with a live salary record</p>
+      </article>
 
-    <mat-card class="chart-card">
-      <h3>Salary Distribution (USD)</h3>
-      <ngx-charts-bar-vertical
-        [results]="distribution()"
-        [xAxis]="true"
-        [yAxis]="true"
-        [showXAxisLabel]="false"
-        [showYAxisLabel]="false"
-        [gradient]="false"
-      ></ngx-charts-bar-vertical>
-    </mat-card>
+      <article class="stat">
+        <h2 class="overline">Total payroll</h2>
+        <p class="stat__value num" [title]="(s.totalPayrollUsd | number: '1.0-0') + ' USD'">
+          {{ s.totalPayrollUsd | compactMoney }}
+        </p>
+        <p class="stat__foot">Annualised base, USD equivalent</p>
+      </article>
+
+      <article class="stat">
+        <h2 class="overline">Average base</h2>
+        <p class="stat__value num">
+          @if (averageBaseUsd(); as avg) {
+            {{ avg | compactMoney }}
+          } @else {
+            &mdash;
+          }
+        </p>
+        <p class="stat__foot">Mean across all active employees</p>
+      </article>
+
+      <article class="stat">
+        <h2 class="overline">Departments</h2>
+        <p class="stat__value num">{{ departmentCount() | number }}</p>
+        <p class="stat__foot">Cost centres reporting headcount</p>
+      </article>
+    }
+  </section>
+
+  <div class="chart-grid">
+    <!--
+      Horizontal bars for the two ranked breakdowns. Department and country
+      names are long; a vertical bar chart would rotate them to 45° and make
+      the axis the hardest thing on the page to read. Horizontal bars put every
+      label on its own baseline, left-aligned and instantly scannable.
+    -->
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Headcount by department</h2>
+        <span class="panel__meta">Ranked</span>
+      </div>
+      <div class="chart chart--tall">
+        @if (headcountByDepartment().length) {
+          <ngx-charts-bar-horizontal
+            [results]="headcountByDepartment()"
+            [scheme]="chartTheme.monoScheme()"
+            [xAxis]="true"
+            [yAxis]="true"
+            [gradient]="false"
+            [roundEdges]="false"
+            [barPadding]="6"
+            [showGridLines]="true"
+            [maxYAxisTickLength]="22"
+          ></ngx-charts-bar-horizontal>
+        } @else {
+          <p class="chart__empty">No department data available.</p>
+        }
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head">
+        <h2 class="panel__title">Payroll by country</h2>
+        <span class="panel__meta">USD</span>
+      </div>
+      <div class="chart chart--tall">
+        @if (payrollByCountry().length) {
+          <ngx-charts-bar-horizontal
+            [results]="payrollByCountry()"
+            [scheme]="chartTheme.monoScheme()"
+            [xAxis]="true"
+            [yAxis]="true"
+            [gradient]="false"
+            [roundEdges]="false"
+            [barPadding]="6"
+            [showGridLines]="true"
+            [maxYAxisTickLength]="22"
+            [xAxisTickFormatting]="formatMoneyTick"
+          ></ngx-charts-bar-horizontal>
+        } @else {
+          <p class="chart__empty">No country data available.</p>
+        }
+      </div>
+    </section>
+
+    <!--
+      The distribution stays vertical and full-width: buckets are an ordered
+      scale, and a histogram read left-to-right is the one shape everyone
+      already knows how to interpret.
+    -->
+    <section class="panel panel--wide">
+      <div class="panel__head">
+        <h2 class="panel__title">Salary distribution</h2>
+        <span class="panel__meta">Headcount per USD band</span>
+      </div>
+      <div class="chart">
+        @if (distribution().length) {
+          <ngx-charts-bar-vertical
+            [results]="distribution()"
+            [scheme]="chartTheme.monoScheme()"
+            [xAxis]="true"
+            [yAxis]="true"
+            [gradient]="false"
+            [roundEdges]="false"
+            [barPadding]="8"
+            [showGridLines]="true"
+          ></ngx-charts-bar-vertical>
+        } @else {
+          <p class="chart__empty">No distribution data available.</p>
+        }
+      </div>
+    </section>
   </div>
 </div>

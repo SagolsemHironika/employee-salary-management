@@ -1,18 +1,74 @@
-.login-page {
+.login {
   display: flex;
-  justify-content: center;
-  padding-top: 96px;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-5);
+  // Sits slightly above true centre: optical centre reads as centred, geometric
+  // centre reads as low.
+  padding: min(14vh, 120px) var(--sp-4) var(--sp-10);
 }
 
-.login-card {
-  width: 360px;
+.login__card {
+  width: 100%;
+  max-width: 380px;
+  padding: var(--sp-6);
 }
 
-.full-width {
+.login__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-6);
+}
+
+.login__mark {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-solid);
+  color: var(--accent-fg);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+}
+
+.login__wordmark {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
+}
+
+.login__title {
+  font-size: var(--fs-xl);
+  line-height: var(--lh-xl);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-tight);
+}
+
+.login__sub {
+  margin: var(--sp-1) 0 var(--sp-5);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+
+.login__field {
   width: 100%;
 }
 
-.error {
-  color: var(--mat-sys-error, #b3261e);
-  margin: 0 0 12px;
+.login__error {
+  margin-bottom: var(--sp-3);
+}
+
+.login__submit {
+  width: 100%;
+  margin-top: var(--sp-1);
+}
+
+.login__footnote {
+  max-width: 380px;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-sm);
+  color: var(--text-tertiary);
+  text-align: center;
 }

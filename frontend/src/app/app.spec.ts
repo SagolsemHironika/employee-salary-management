@@ -1,10 +1,14 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { App } from './app';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
+      // The shell renders a routerLink on the brand and hosts a router-outlet,
+      // both of which need real routing context.
+      providers: [provideRouter([])],
     }).compileComponents();
   });
 

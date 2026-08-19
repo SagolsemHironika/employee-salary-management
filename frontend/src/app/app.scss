@@ -1,3 +1,135 @@
+// App bar: sticky, hairline-bottom, surface-coloured.
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  padding: 0 var(--sp-5);
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-surface);
+}
+
 .spacer {
   flex: 1 1 auto;
+}
+
+// ---- brand -----------------------------------------------------------------
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  text-decoration: none;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+}
+
+.brand__mark {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-solid);
+  color: var(--accent-fg);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.02em;
+}
+
+.brand__name {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-tight);
+  white-space: nowrap;
+}
+
+// ---- nav -------------------------------------------------------------------
+// Underline-on-active rather than a filled pill: the indicator sits on the bar's
+// own baseline, so switching tabs does not shift any surrounding weight.
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  height: 100%;
+}
+
+.nav__link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: var(--topbar-h);
+  padding: 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.nav__link::after {
+  content: '';
+  position: absolute;
+  inset: auto var(--sp-2) -1px;
+  height: 2px;
+  border-radius: var(--radius-full) var(--radius-full) 0 0;
+  background: transparent;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.nav__link:hover {
+  color: var(--text-primary);
+}
+
+.nav__link--active {
+  color: var(--text-primary);
+  font-weight: var(--fw-semibold);
+}
+
+.nav__link--active::after {
+  background: var(--accent-solid);
+}
+
+// ---- icon button -----------------------------------------------------------
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.icon-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.icon-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.topbar__signout {
+  margin-left: var(--sp-1);
+}
+
+// Tablet: the wordmark is the first thing to go — the mark alone still
+// identifies the app, and the nav is what people actually reach for.
+@media (max-width: 720px) {
+  .topbar {
+    gap: var(--sp-3);
+    padding: 0 var(--sp-4);
+  }
+
+  .brand__name {
+    display: none;
+  }
 }

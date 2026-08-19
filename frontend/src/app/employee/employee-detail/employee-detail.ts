@@ -1,29 +1,42 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatTableModule } from '@angular/material/table';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { EmployeeService } from '../employee.service';
 import { EmployeeSummary } from '../employee.model';
 import { SalaryRecordService } from '../../salary/salary-record.service';
 import { SalaryRecord } from '../../salary/salary-record.model';
+import { HumanizePipe, InitialsPipe, PlainDatePipe } from '../../core/format.pipe';
+
+/** One rendered node on the salary timeline. */
+export interface TimelineEntry {
+  record: SalaryRecord;
+  current: boolean;
+  /** null when there is no prior record, or when the currency changed. */
+  deltaAbsolute: number | null;
+  deltaPercent: number | null;
+  direction: 'up' | 'down' | 'flat' | 'none';
+  /** True when the previous record used a different currency. */
+  currencyChanged: boolean;
+}
 
 @Component({
   selector: 'app-employee-detail',
   imports: [
+    DecimalPipe,
+    RouterLink,
     ReactiveFormsModule,
     MatButtonModule,
-    MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatTableModule,
-    MatProgressSpinnerModule
+    InitialsPipe,
+    HumanizePipe,
+    PlainDatePipe
   ],
   templateUrl: './employee-detail.html',
   styleUrl: './employee-detail.scss'
@@ -32,13 +45,50 @@ export class EmployeeDetail implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   readonly changeReasons = ['hire', 'promotion', 'annual_review', 'adjustment'];
-  readonly historyColumns = ['effectiveDate', 'endDate', 'baseSalary', 'currencyCode', 'changeReason', 'createdBy'];
 
   readonly employee = signal<EmployeeSummary | null>(null);
   readonly history = signal<SalaryRecord[]>([]);
   readonly loading = signal(true);
   readonly submitting = signal(false);
   readonly formError = signal<string | null>(null);
+
+  /**
+   * History arrives newest-first, so the *next* element is the previous salary.
+   *
+   * A delta is only meaningful within one currency: 95,000 USD following
+   * 88,000 EUR is not a 7.9% rise. Rather than silently converting at today's
+   * FX rate — which would restate history every time rates move — the entry is
+   * flagged and the delta suppressed.
+   */
+  readonly timeline = computed<TimelineEntry[]>(() => {
+    const records = this.history();
+    return records.map((record, index) => {
+      const previous = records[index + 1];
+      const currencyChanged = Boolean(previous && previous.currencyCode !== record.currencyCode);
+
+      if (!previous || currencyChanged) {
+        return {
+          record,
+          current: record.endDate === null,
+          deltaAbsolute: null,
+          deltaPercent: null,
+          direction: 'none' as const,
+          currencyChanged
+        };
+      }
+
+      const deltaAbsolute = record.baseSalary - previous.baseSalary;
+      const deltaPercent = previous.baseSalary ? (deltaAbsolute / previous.baseSalary) * 100 : null;
+      return {
+        record,
+        current: record.endDate === null,
+        deltaAbsolute,
+        deltaPercent,
+        direction: deltaAbsolute > 0 ? ('up' as const) : deltaAbsolute < 0 ? ('down' as const) : ('flat' as const),
+        currencyChanged: false
+      };
+    });
+  });
 
   readonly form = this.fb.group({
     baseSalary: [null as number | null, [Validators.required, Validators.min(0.01)]],
@@ -59,6 +109,18 @@ export class EmployeeDetail implements OnInit {
     this.employeeId = Number(this.route.snapshot.paramMap.get('id'));
     this.loadEmployee();
     this.loadHistory();
+  }
+
+  statusTone(status: string | undefined): 'active' | 'pending' | 'inactive' {
+    switch (status?.toLowerCase()) {
+      case 'active':
+        return 'active';
+      case 'on_leave':
+      case 'pending':
+        return 'pending';
+      default:
+        return 'inactive';
+    }
   }
 
   submit(): void {

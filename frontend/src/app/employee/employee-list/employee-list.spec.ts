@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { EmployeeList } from './employee-list';
 import { EmployeeService } from '../employee.service';
@@ -39,7 +39,12 @@ describe('EmployeeList', () => {
       imports: [EmployeeList],
       providers: [
         { provide: EmployeeService, useValue: employeeServiceMock },
-        { provide: Router, useValue: routerMock }
+        { provide: Router, useValue: routerMock },
+        // The name cell renders a real routerLink so keyboard users get proper
+        // link semantics; RouterLink resolves ActivatedRoute for relative
+        // resolution, so the stub has to be present even though every link here
+        // is absolute.
+        { provide: ActivatedRoute, useValue: {} }
       ]
     });
   });
