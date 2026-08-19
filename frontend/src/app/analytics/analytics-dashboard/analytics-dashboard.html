@@ -1,0 +1,56 @@
+<div class="analytics-dashboard">
+  <h1>Analytics</h1>
+
+  @if (loading()) {
+    <mat-spinner diameter="32"></mat-spinner>
+  } @else if (summary(); as s) {
+    <div class="stat-tiles">
+      <mat-card class="stat-tile">
+        <div class="stat-value">{{ s.headcount }}</div>
+        <div class="stat-label">Active Headcount</div>
+      </mat-card>
+      <mat-card class="stat-tile">
+        <div class="stat-value">{{ s.totalPayrollUsd | number: '1.0-0' }}</div>
+        <div class="stat-label">Total Payroll (USD)</div>
+      </mat-card>
+    </div>
+  }
+
+  <div class="charts">
+    <mat-card class="chart-card">
+      <h3>Headcount by Department</h3>
+      <ngx-charts-bar-vertical
+        [results]="headcountByDepartment()"
+        [xAxis]="true"
+        [yAxis]="true"
+        [showXAxisLabel]="false"
+        [showYAxisLabel]="false"
+        [gradient]="false"
+      ></ngx-charts-bar-vertical>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <h3>Payroll (USD) by Country</h3>
+      <ngx-charts-bar-vertical
+        [results]="payrollByCountry()"
+        [xAxis]="true"
+        [yAxis]="true"
+        [showXAxisLabel]="false"
+        [showYAxisLabel]="false"
+        [gradient]="false"
+      ></ngx-charts-bar-vertical>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <h3>Salary Distribution (USD)</h3>
+      <ngx-charts-bar-vertical
+        [results]="distribution()"
+        [xAxis]="true"
+        [yAxis]="true"
+        [showXAxisLabel]="false"
+        [showYAxisLabel]="false"
+        [gradient]="false"
+      ></ngx-charts-bar-vertical>
+    </mat-card>
+  </div>
+</div>

@@ -1,0 +1,34 @@
+.analytics-dashboard {
+  padding: 24px;
+
+  .stat-tiles {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-tile {
+    padding: 16px 24px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-size: 32px;
+    font-weight: 600;
+  }
+
+  .stat-label {
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .charts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+
+  .chart-card {
+    padding: 16px;
+    flex: 1 1 420px;
+  }
+}
