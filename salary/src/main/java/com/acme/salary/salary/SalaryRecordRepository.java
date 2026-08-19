@@ -9,4 +9,6 @@ public interface SalaryRecordRepository extends JpaRepository<SalaryRecord, Long
     List<SalaryRecord> findByEmployeeIdOrderByEffectiveDateDesc(Long employeeId);
 
     Optional<SalaryRecord> findByEmployeeIdAndEndDateIsNull(Long employeeId);
+
+    List<SalaryRecord> findByEmployeeIdInAndEndDateIsNull(List<Long> employeeIds);
 }

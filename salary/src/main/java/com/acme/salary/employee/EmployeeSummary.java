@@ -1,5 +1,7 @@
 package com.acme.salary.employee;
 
+import com.acme.salary.salary.SalaryRecord;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record EmployeeSummary(
@@ -13,9 +15,11 @@ public record EmployeeSummary(
         String jobTitle,
         String band,
         LocalDate hireDate,
-        String status) {
+        String status,
+        BigDecimal currentBaseSalary,
+        String currentCurrencyCode) {
 
-    static EmployeeSummary from(Employee employee) {
+    static EmployeeSummary from(Employee employee, SalaryRecord currentSalary) {
         return new EmployeeSummary(
                 employee.getId(),
                 employee.getEmployeeCode(),
@@ -27,6 +31,8 @@ public record EmployeeSummary(
                 employee.getJobTitle(),
                 employee.getBand(),
                 employee.getHireDate(),
-                employee.getStatus());
+                employee.getStatus(),
+                currentSalary == null ? null : currentSalary.getBaseSalary(),
+                currentSalary == null ? null : currentSalary.getCurrencyCode());
     }
 }
