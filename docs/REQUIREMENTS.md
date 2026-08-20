@@ -41,10 +41,19 @@ approval chains (v1 scoping decision — see Out of Scope).
 
 ## Acceptance Criteria (high level)
 - Can create/search/filter/paginate employees across 10k+ records without
-  full-table scans (verify via query plans on `country_code`,
-  `department`, `email` indexes).
-- Creating a new salary record closes the previous one's `end_date`
-  atomically — no overlapping "current" records for one employee.
+  full-table scans. Verify via query plans: filtering uses
+  `employees(country_code, department)`; the unfiltered default list uses
+  `employees(last_name, first_name, id)`, which is also what the pagination
+  tiebreaker sorts on.
+- Paging is stable under a non-unique sort. Sorting by salary ties heavily
+  (~10k employees, ~6k distinct salaries), and SQL does not order tied rows
+  deterministically, so every `ORDER BY` ends with `e.id`. Without it,
+  consecutive pages can repeat or skip employees.
+- Creating a new salary record closes the previous one's `end_date` before
+  inserting the replacement, and the database — not just the service —
+  guarantees at most one open record per employee via a partial unique
+  index. A losing concurrent write gets 409, not a corrupted history.
+- No endpoint returns an unbounded page: `max-page-size` is 100.
 - Analytics endpoints return correct aggregates against seeded data,
   verified by integration tests with known expected totals.
 - Unauthenticated requests to any `/employees`, `/analytics`, or

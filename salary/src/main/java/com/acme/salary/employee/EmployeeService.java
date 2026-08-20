@@ -117,20 +117,29 @@ public class EmployeeService {
         return EmployeeSummary.from(employee, currentSalary);
     }
 
+    // Every ORDER BY ends with e.id so the row order is total, not just
+    // partial. Without it, pagination is unsound whenever the sort key repeats:
+    // ~10,000 seeded employees share only ~6,000 distinct salaries, and SQL
+    // gives no guarantee about the relative order of tied rows between two
+    // executions. Consecutive LIMIT/OFFSET pages could then overlap or skip
+    // employees entirely - silently, and more often as the table grows and the
+    // planner starts choosing parallel scans.
+    private static final String TIEBREAKER = ", e.id ASC ";
+
     private String orderByClause(Sort sort) {
         if (sort.isUnsorted()) {
-            // Deliberately not e.id: employee_code is assigned in the same
-            // sequence as id, so an id-based default would make the first
+            // Deliberately not e.id first: employee_code is assigned in the
+            // same sequence as id, so an id-based default would make the first
             // "Employee ID" ascending sort click look like a no-op (it
             // would exactly match this default order). Name ordering has
             // no relationship to id/employee_code, so every explicit sort
             // - including that first click - visibly changes row order.
-            return " ORDER BY e.last_name ASC, e.first_name ASC ";
+            return " ORDER BY e.last_name ASC, e.first_name ASC" + TIEBREAKER;
         }
         Sort.Order order = sort.iterator().next();
         String column = SORTABLE_COLUMNS.getOrDefault(order.getProperty(), "e.id");
         String direction = order.isAscending() ? "ASC" : "DESC";
         String nullHandling = column.equals("current_usd_salary") ? " NULLS LAST" : "";
-        return " ORDER BY " + column + " " + direction + nullHandling + " ";
+        return " ORDER BY " + column + " " + direction + nullHandling + TIEBREAKER;
     }
 }

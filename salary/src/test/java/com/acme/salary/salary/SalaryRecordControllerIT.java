@@ -1,5 +1,6 @@
 package com.acme.salary.salary;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -12,13 +13,18 @@ import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 class SalaryRecordControllerIT extends AbstractIntegrationTest {
 
     @Autowired
     private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private Long employeeId;
 
@@ -36,6 +42,31 @@ class SalaryRecordControllerIT extends AbstractIntegrationTest {
         employee.setHireDate(LocalDate.of(2021, 3, 15));
         employee.setStatus("active");
         employeeId = employeeRepository.save(employee).getId();
+    }
+
+    @Test
+    void databaseRejectsASecondOpenSalaryRecordForOneEmployee() throws Exception {
+        String token = adminToken();
+        mockMvc.perform(post("/employees/" + employeeId + "/salary-records")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(hireRecordJson("2021-03-15")))
+                .andExpect(status().isCreated());
+
+        // Deliberately bypasses the service to insert straight into the table.
+        // The point is that "one current salary per employee" holds because the
+        // schema enforces it, not because every caller remembers to -- so it
+        // survives bulk imports, migrations and manual SQL too. Asserting it
+        // through the API would only re-test the service's own bookkeeping.
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                        """
+                        INSERT INTO salary_records
+                            (employee_id, base_salary, currency_code, effective_date, change_reason, created_by)
+                        VALUES (?, 120000, 'USD', DATE '2024-01-01', 'adjustment', 'rogue-writer')
+                        """,
+                        employeeId))
+                .isInstanceOf(DuplicateKeyException.class)
+                .hasMessageContaining("uq_salary_records_open_per_employee");
     }
 
     @Test

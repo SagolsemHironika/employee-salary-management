@@ -21,6 +21,26 @@ query plans used by `/employees` filtering and `/employees/{id}/salary-records`
 were never accidentally validated against an unindexed table locally and
 then discovered to be slow later.
 
+## The index that was missing — and how it was found
+Having indexes for the *filtered* paths did not mean the default path was
+covered, and assuming so was wrong. `EmployeeService.orderByClause` falls back
+to `ORDER BY last_name, first_name` when no sort is requested — which is what
+the directory loads with — and those columns were not indexed. `EXPLAIN
+ANALYZE` against the seeded 10k dataset:
+
+| | plan | time |
+|---|---|---|
+| before | `Seq Scan` employees + `Seq Scan` salary_records → top-N heapsort | **20.4 ms** |
+| after `V4` | `Index Scan using idx_employees_name` | **0.74 ms** |
+
+The time is the smaller point; the plan is the real one. A sequential scan
+plus sort is linear in table size, so it degrades to roughly 200 ms at 100k
+rows, while an index scan stays flat. `V4__list_performance_and_open_record_integrity.sql`
+adds `employees(last_name, first_name, id)`.
+
+The lesson worth keeping: this was found by reading query plans, not by
+reasoning about which indexes "should" be enough.
+
 ## Seed script: single-row inserts, not JDBC batching — a deliberate trade-off
 `hibernate.jdbc.batch_size=500` is configured in `application.yml`, but it
 doesn't actually apply to the seed run: Hibernate disables JDBC batching for
@@ -37,8 +57,28 @@ kept because it's harmless and correct for any future bulk *update* path;
 it's simply not the reason the seed script is fast.
 
 ## What would need to change past 10k
-None of the above architecture changes for 100k or 1M employees — the same
-indexes and SQL-side aggregation keep working. The one thing that would
-start to matter is the `IDENTITY`-vs-`SEQUENCE` trade-off above, if seeding
-needed to run in seconds rather than tens of seconds; not a concern at the
-scale this system was built for.
+The shape of the architecture holds — server-side pagination and SQL-side
+aggregation are the same code at 100k or 1M. What does *not* automatically
+hold is the assumption that the existing indexes cover every access path;
+see above for a case where they did not, caught only by reading a query plan.
+
+Measured or identified so far, in priority order:
+
+1. **Analytics is the real ceiling.** Each of the three endpoints is a full
+   aggregation over active employees (~11–13 ms at 10k), and the dashboard
+   fires four requests on load. That is linear, so ~120 ms each at 100k,
+   multiplied by concurrent users. The fix is caching, not query tuning:
+   the results are identical for every user and only change when a salary
+   record is written. A 60-second in-memory cache with eviction on write
+   turns O(users × 4 scans) into O(1 scan/minute). Redis only becomes
+   justified with more than one app instance.
+2. **The list `COUNT(*)` joins tables it does not filter on** —
+   8.8 ms versus 1.1 ms counting from `employees` alone. Safe to simplify
+   now that `V4` guarantees the join cannot multiply rows.
+3. **Deep `OFFSET` paging** would need keyset pagination, but only if users
+   actually page thousands deep rather than filtering.
+
+Explicitly *not* worth doing, having measured it: rewriting the FX `LATERAL`
+join as a CTE. It looks like a per-row subquery, but PostgreSQL memoizes it
+(9,992 cache hits against 8 misses on the 10k set), so the rewrite moved
+12.7 ms to 11.0 ms — noise, in exchange for less obvious SQL.

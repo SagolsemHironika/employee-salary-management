@@ -7,6 +7,17 @@ spring:
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:postgres}
 
+  # Spring Data's default cap is 2000, so a client could ask for - and get -
+  # 2000 salary rows in one response (~630KB), enumerating the whole directory
+  # in five requests. Salary data is sensitive PII: bounding the page size
+  # bounds both per-request cost and how much of it a single leaked token can
+  # pull. 100 matches the largest option the UI offers.
+  data:
+    web:
+      pageable:
+        default-page-size: 20
+        max-page-size: 100
+
   jpa:
     hibernate:
       ddl-auto: validate

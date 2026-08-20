@@ -3,6 +3,7 @@ package com.acme.salary.salary;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -64,6 +66,7 @@ class SalaryRecordServiceTest {
 
         when(employeeRepository.existsById(1L)).thenReturn(true);
         when(salaryRecordRepository.findByEmployeeIdAndEndDateIsNull(1L)).thenReturn(Optional.of(current));
+        when(salaryRecordRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(salaryRecordRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         SalaryRecordRequest request = new SalaryRecordRequest(
@@ -71,11 +74,18 @@ class SalaryRecordServiceTest {
 
         service.createRecord(1L, request, "tester");
 
-        ArgumentCaptor<SalaryRecord> captor = ArgumentCaptor.forClass(SalaryRecord.class);
-        verify(salaryRecordRepository, times(2)).save(captor.capture());
+        // Order is load-bearing, not incidental: the close must reach the
+        // database before the insert, or both rows momentarily have a null
+        // end_date and uq_salary_records_open_per_employee (V4) rejects the
+        // insert. Asserting the order here fails fast if someone downgrades
+        // that saveAndFlush back to a plain save.
+        ArgumentCaptor<SalaryRecord> inserted = ArgumentCaptor.forClass(SalaryRecord.class);
+        InOrder inOrder = inOrder(salaryRecordRepository);
+        inOrder.verify(salaryRecordRepository).saveAndFlush(current);
+        inOrder.verify(salaryRecordRepository).save(inserted.capture());
 
         assertThat(current.getEndDate()).isEqualTo(LocalDate.of(2023, 12, 31));
-        SalaryRecord newRecord = captor.getAllValues().get(1);
+        SalaryRecord newRecord = inserted.getValue();
         assertThat(newRecord.getEffectiveDate()).isEqualTo(LocalDate.of(2024, 1, 1));
         assertThat(newRecord.getEndDate()).isNull();
     }
