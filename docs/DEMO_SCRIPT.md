@@ -4,6 +4,10 @@ A ~4-5 minute walkthrough covering the requirements brief end to end. Record
 against either the local Docker stack (`docker-compose.prod.yml`) or a real
 deployment.
 
+This file is the **shot list** — what to put on screen, in what order, with
+timings. For the spoken narration that goes over it, see
+[`DEMO_NARRATION.md`](DEMO_NARRATION.md).
+
 ## 1. Requirements framing (30s)
 Briefly state the problem: HR at ACME manages 10,000 employees' salaries
 across countries via spreadsheets; this replaces that with a system that can
